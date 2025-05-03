@@ -5,6 +5,7 @@ import engine.modules.messages_text as messages
 class Kernel:
     def __init__(self):
         self.MainMenuButtons = messages.getMainMenuButtons()
+        self.Messages = messages.getMessages()
 
         self.kernelConfig = configparser.ConfigParser()
         self.DBConfig = configparser.ConfigParser()
@@ -13,6 +14,11 @@ class Kernel:
         self.DBConfig.read('engine/config/db.conf')
 
         self.botToken = self.kernelConfig.get("BOT", "token")
+        debug = self.kernelConfig.get("BOT", "debug")
+        if (debug == "true"):
+            self.debug = True
+        else:
+            self.debug = False
 
         self.webDBConfig = {
             "username" : self.DBConfig.get("WEB", "username"),
@@ -46,6 +52,10 @@ class Kernel:
             database=self.botDBConfig["database"],
             port=self.botDBConfig["port"],
         )
+        self.adminList = self.botDatabase.getData("SELECT * FROM `Admins_BOT`")
+        self.actualAdmins = []
+        for admin in self.adminList:
+            self.actualAdmins.append(admin[1])
 
     def getToken(self):
         return self.botToken
@@ -55,3 +65,12 @@ class Kernel:
         return self.botDBConfig
     def getMainMenuButtons(self):
         return self.MainMenuButtons
+    def getMessages(self):
+        return self.Messages
+    def isDebug(self):
+        return self.debug
+    def isAdmin(self, id):
+        if (str(id) in self.actualAdmins):
+            return True
+        else:
+            return False
