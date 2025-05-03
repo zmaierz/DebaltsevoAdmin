@@ -34,4 +34,5 @@ def getMessages():
         "createPage_cancel" : "Отмена создания страницы",
         "createPage_Ok" : "Создание страницы",
         "settingsText" : "Настройки",
+        "settingsCache" : "Использование кэша: {0}",
     }
