@@ -1,3 +1,4 @@
 engine/__pycache__
+engine/DB/__pycache__
 engine/config/kernel.conf
 engine/config/db.conf
