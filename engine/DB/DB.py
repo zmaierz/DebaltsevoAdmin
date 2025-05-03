@@ -9,12 +9,20 @@ class Database:
         self.port = port
     def getConnection(self):
         try:
-            with mysql.connector.connect(
+            connection = mysql.connector.connect(
                 user=self.username,
                 password=self.password,
                 host=self.hostname,
                 database=self.database
-            ) as connection:
-                return connection
+            )
+            return connection
         except mysql.connector.Error as e:
             print(e) # Change me! Logging error.
+    def getData(self, query):
+        connection = self.getConnection()
+        cursor = connection.cursor()
+        cursor.execute(query)
+        result = cursor.fetchall()
+        cursor.close()
+        connection.close()
+        return result
