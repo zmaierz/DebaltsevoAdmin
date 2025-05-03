@@ -1,3 +1,4 @@
 [BOT]
 token = 123
 debug = false
+web-path = /var/www/html
