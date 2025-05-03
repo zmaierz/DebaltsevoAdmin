@@ -3,7 +3,7 @@ username = 123
 password = 123
 hostname = 123
 database = 123
-port = 123
+port = 3306
 
 [BOT]
 as-web = false
