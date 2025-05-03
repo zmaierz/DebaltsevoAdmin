@@ -36,8 +36,13 @@ class Kernel:
             database=self.webDBConfig["database"],
             port=self.webDBConfig["port"],
         )
-
-        print(self.webDatabase.getConnection())
+        self.botDatabase = database.Database(
+            username=self.botDBConfig["username"],
+            password=self.botDBConfig["password"],
+            hostname=self.botDBConfig["hostname"],
+            database=self.botDBConfig["database"],
+            port=self.botDBConfig["port"],
+        )
 
     def getToken(self):
         return self.botToken
