@@ -74,7 +74,13 @@ def answer(message):
             elif (message.text == settingsMenuButtons["changeSiteInformation"]):
                 bot.send_message(message.chat.id, "Изменение информации о сайте в разработке")
             elif (message.text == settingsMenuButtons["manage"]):
-                bot.send_message(message.chat.id, "Управление в разработке")
+                debugStatus = kernel.getDebugStatus()
+                if (debugStatus):
+                    debugOnOffButton = types.InlineKeyboardButton("Выключить дебаг", callback_data="s-d-0")
+                else:
+                    debugOnOffButton = types.InlineKeyboardButton("Включить дебаг", callback_data="s-d-1-0")
+                debugSettingMarkup = types.InlineKeyboardMarkup().add(debugOnOffButton)
+                bot.send_message(message.chat.id, botMessages["settingsManage"].format(kernel.getStrFromBool(debugStatus), kernel.getStrFromBool(kernel.getCacheStatus())), reply_markup=debugSettingMarkup)
             elif (message.text == settingsMenuButtons["admins"]):
                 bot.send_message(message.chat.id, "Управление админами в разработке")
             elif (message.text == settingsMenuButtons["version"]):
@@ -125,6 +131,22 @@ def process(call):
                     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Кэш выключен", reply_markup=None)
                 elif (call.data[6] == "2"): # Config No
                     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Отменено", reply_markup=None)
+        elif (call.data[2] == "d"): # Debug
+            if (call.data[4] == "1"): # On
+                if (call.data[6] == "0"): # Confim None
+                    confimDebugOnMarkup = types.InlineKeyboardMarkup().add(
+                        types.InlineKeyboardButton("Да", callback_data="s-d-1-1"),
+                        types.InlineKeyboardButton("Нет", callback_data="s-d-1-2")
+                    )
+                    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Вы точно уверены в том, что хотите включить дебаг?", reply_markup=confimDebugOnMarkup)
+                elif (call.data[6] == "1"): # Confim Ok
+                    kernel.changeDebugStatus(True)
+                    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Дебаг включен", reply_markup=None)
+                elif (call.data[6] == "2"): # Confim No
+                    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Отменено", reply_markup=None)
+            elif (call.data[4] == "0"): # Off
+                kernel.changeDebugStatus(False)
+                bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Дебаг выключен")
     elif (call.data[0] == "d"): # Delete
         if (call.data[2] == "s"): # Cache
             if (call.data[4] == "0"): # Confirm None

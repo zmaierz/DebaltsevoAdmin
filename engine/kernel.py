@@ -155,6 +155,25 @@ class Kernel:
         if (cacheStatus == "t"):
             return True
         return False
+    def getDebugStatus(self):
+        webConfig = functions.getFileContent(self.webPath + "engine/config/kernelConfig.php")
+        cacheStatus = webConfig.partition("\"debug\" =>")[2].strip()[0]
+        if (cacheStatus == "t"):
+            return True
+        return False
+    def changeDebugStatus(self, newStatus):
+        if (newStatus):
+            newStatus = "true"
+            oldStatus = "false"
+        else:
+            newStatus = "false"
+            oldStatus = "true"
+        webConfig = functions.getFileContent(self.webPath + "engine/config/kernelConfig.php")
+        cacheStatus = webConfig.partition("\"debug\" =>")
+        newConfig = cacheStatus[0] + cacheStatus[1]
+        endConfig = cacheStatus[2].partition(oldStatus)
+        newConfig += newStatus + endConfig[2]
+        functions.writeFileContent(self.webPath + "engine/config/kernelConfig.php", newConfig)
     def deleteAllCache(self):
         functions.deleteDirectoryContent(self.webPath + self.cachePath + "system/")
         functions.deleteDirectoryContent(self.webPath + self.cachePath + "pages/")
