@@ -12,4 +12,10 @@ def deleteFile(path):
 def getFileContent(path):
     file = open(path)
     content = file.read()
+    file.close()
     return content
+
+def writeFileContent(path, data):
+    file = open(path, "w")
+    file.write(data)
+    file.close()
