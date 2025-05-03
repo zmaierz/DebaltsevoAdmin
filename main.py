@@ -6,11 +6,18 @@ kernel = Core.Kernel()
 bot = telebot.TeleBot(kernel.getToken())
 
 mainMenuButtons = kernel.getMainMenuButtons()
+settingsMenuButtons = kernel.getSettingsMenuButtons()
 botMessages = kernel.getMessages()
 
 mainMenuMarkup = types.ReplyKeyboardMarkup(resize_keyboard=True)
 mainMenuMarkup.add(types.KeyboardButton(mainMenuButtons["createNewPage"]), types.KeyboardButton(mainMenuButtons["Categories"]), types.KeyboardButton(mainMenuButtons["News"]))
 mainMenuMarkup.add(types.KeyboardButton(mainMenuButtons["Settings"]), types.KeyboardButton(mainMenuButtons["Logs"]))
+
+settingsMenuMarkup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+settingsMenuMarkup.add(types.KeyboardButton(settingsMenuButtons["cache"]), types.KeyboardButton(settingsMenuButtons["checkFiles"]))
+settingsMenuMarkup.add(types.KeyboardButton(settingsMenuButtons["changeSiteInformation"]))
+settingsMenuMarkup.add(types.KeyboardButton(settingsMenuButtons["manage"]), types.KeyboardButton(settingsMenuButtons["admins"]), types.KeyboardButton(settingsMenuButtons["version"]))
+settingsMenuMarkup.add(types.KeyboardButton(settingsMenuButtons["back"]))
 
 unregisterMarkup = types.ReplyKeyboardMarkup(resize_keyboard=True).add(types.KeyboardButton(mainMenuButtons["RegisterUser"]))
 
@@ -50,9 +57,24 @@ def answer(message):
         elif (message.text == mainMenuButtons["News"]):
             bot.send_message(message.chat.id, "Новости в разработке!")
         elif (message.text == mainMenuButtons["Settings"]):
-            bot.send_message(message.chat.id, "Настройки в разработке!")
+            bot.send_message(message.chat.id, botMessages["settingsText"], reply_markup=settingsMenuMarkup)
         elif (message.text == mainMenuButtons["Logs"]):
             bot.send_message(message.chat.id, "Логи в разработке!")
+        elif (kernel.checkButtonFromList("settings", message.text)):
+            if (message.text == settingsMenuButtons["cache"]):
+                bot.send_message(message.chat.id, "Настройка кэша в разработке")
+            elif (message.text == settingsMenuButtons["checkFiles"]):
+                bot.send_message(message.chat.id, "Просмотр файлов в разработке")
+            elif (message.text == settingsMenuButtons["changeSiteInformation"]):
+                bot.send_message(message.chat.id, "Изменение информации о сайте в разработке")
+            elif (message.text == settingsMenuButtons["manage"]):
+                bot.send_message(message.chat.id, "Управление в разработке")
+            elif (message.text == settingsMenuButtons["admins"]):
+                bot.send_message(message.chat.id, "Управление админами в разработке")
+            elif (message.text == settingsMenuButtons["version"]):
+                bot.send_message(message.chat.id, "Просмотр версии в разработке")
+            elif (message.text == settingsMenuButtons["back"]):
+                bot.send_message(message.chat.id, "Главная", reply_markup=mainMenuMarkup)
     elif (message.text == mainMenuButtons["RegisterUser"]):
         bot.send_message(message.chat.id, "Регистрация пользователя в разработке")
     else:

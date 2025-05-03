@@ -8,6 +8,7 @@ import engine.modules.functions as functions
 class Kernel:
     def __init__(self):
         self.MainMenuButtons = messages.getMainMenuButtons()
+        self.settingsButtons = messages.getSettingsMenuButtons()
         self.Messages = messages.getMessages()
 
         self.kernelConfig = configparser.ConfigParser()
@@ -106,6 +107,8 @@ class Kernel:
         return self.botDBConfig
     def getMainMenuButtons(self):
         return self.MainMenuButtons
+    def getSettingsMenuButtons(self):
+        return self.settingsButtons
     def getMessages(self):
         return self.Messages
     def getUsersActions(self, id = None):
@@ -137,4 +140,10 @@ class Kernel:
         if (str(id) in self.actualAdmins):
             return True
         else:
+            return False
+    def checkButtonFromList(self, type, data):
+        if (type == "settings"):
+            for i in self.settingsButtons:
+                if (self.settingsButtons[i] == data):
+                    return True
             return False
