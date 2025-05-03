@@ -17,6 +17,8 @@ class Kernel:
         self.DBConfig.read('engine/config/db.conf')
 
         self.botToken = self.kernelConfig.get("BOT", "token")
+        self.webPath = self.kernelConfig.get("BOT", "web-path")
+        self.cachePath = self.kernelConfig.get("BOT", "cache-path")
         debug = self.kernelConfig.get("BOT", "debug")
         if (debug == "true"):
             self.debug = True
@@ -93,6 +95,9 @@ class Kernel:
         self.webDatabase.executeQuery(addPageToListQuery)
         self.webDatabase.executeQuery(createPageTableQuery)
         self.webDatabase.executeQuery(createPageConnectionQuery)
+        systemCachePath = self.webPath + self.cachePath + "system/"
+        functions.deleteFile(systemCachePath + "footer.html")
+        functions.deleteFile(systemCachePath + "header.html")
     def getToken(self):
         return self.botToken
     def getWebDBConfig(self):
