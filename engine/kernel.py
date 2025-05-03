@@ -1,8 +1,11 @@
 import configparser
 import engine.DB.DB as database
+import engine.modules.messages_text as messages
 
 class Kernel:
     def __init__(self):
+        self.MainMenuButtons = messages.getMainMenuButtons()
+
         self.kernelConfig = configparser.ConfigParser()
         self.DBConfig = configparser.ConfigParser()
 
@@ -50,3 +53,5 @@ class Kernel:
         return self.webDBConfig
     def getBotDBConfig(self):
         return self.botDBConfig
+    def getMainMenuButtons(self):
+        return self.MainMenuButtons
