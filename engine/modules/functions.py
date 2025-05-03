@@ -8,3 +8,8 @@ def translitText(text):
 def deleteFile(path):
     if (os.path.exists(path)):
         os.remove(path)
+
+def getFileContent(path):
+    file = open(path)
+    content = file.read()
+    return content
