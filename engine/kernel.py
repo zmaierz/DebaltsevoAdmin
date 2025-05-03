@@ -129,13 +129,35 @@ class Kernel:
     def getStrFromBool(self, temp):
         temp = int(temp)
         if (temp == 1):
-            return "Да"
+            return "🟢 Да"
         else:
-            return "Нет"
+            return "🟥 Нет"
     def cancelAction(self, id):
         del self.usersActions[id]
     def isDebug(self):
         return self.debug
+    def changeCacheStatus(self, newStatus):
+        if (newStatus):
+            newStatus = "true"
+            oldStatus = "false"
+        else:
+            newStatus = "false"
+            oldStatus = "true"
+        webConfig = functions.getFileContent(self.webPath + "engine/config/kernelConfig.php")
+        cacheStatus = webConfig.partition("\"useCache\" =>")
+        newConfig = cacheStatus[0] + cacheStatus[1]
+        endConfig = cacheStatus[2].partition(oldStatus)
+        newConfig += newStatus + endConfig[2]
+        functions.writeFileContent(self.webPath + "engine/config/kernelConfig.php", newConfig)
+    def getCacheStatus(self):
+        webConfig = functions.getFileContent(self.webPath + "engine/config/kernelConfig.php")
+        cacheStatus = webConfig.partition("\"useCache\" =>")[2].strip()[0]
+        if (cacheStatus == "t"):
+            return True
+        return False
+    def deleteAllCache(self):
+        functions.deleteDirectoryContent(self.webPath + self.cachePath + "system/")
+        functions.deleteDirectoryContent(self.webPath + self.cachePath + "pages/")
     def isAdmin(self, id):
         if (str(id) in self.actualAdmins):
             return True

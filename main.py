@@ -62,7 +62,13 @@ def answer(message):
             bot.send_message(message.chat.id, "Логи в разработке!")
         elif (kernel.checkButtonFromList("settings", message.text)):
             if (message.text == settingsMenuButtons["cache"]):
-                bot.send_message(message.chat.id, "Настройка кэша в разработке")
+                cacheStatus = kernel.getCacheStatus()
+                if (cacheStatus):
+                    cacheOnOffButton = types.InlineKeyboardButton("Выключить", callback_data="s-c-0-0")
+                else:
+                    cacheOnOffButton = types.InlineKeyboardButton("Включить", callback_data="s-c-1")
+                cacheSettingMarkup = types.InlineKeyboardMarkup().add(cacheOnOffButton, types.InlineKeyboardButton("Очистить", callback_data="d-s-0"))
+                bot.send_message(message.chat.id, botMessages["settingsCache"].format(kernel.getStrFromBool(cacheStatus)), reply_markup=cacheSettingMarkup)
             elif (message.text == settingsMenuButtons["checkFiles"]):
                 bot.send_message(message.chat.id, "Просмотр файлов в разработке")
             elif (message.text == settingsMenuButtons["changeSiteInformation"]):
@@ -105,5 +111,29 @@ def process(call):
                     kernel.pageCreate(call.from_user.id, 5)
                     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text=botMessages["createPage_Ok"], reply_markup=None)
                     bot.send_message(call.message.chat.id, "Главное меню", reply_markup=mainMenuMarkup)
+    elif (call.data[0] == "s"): # Setting
+        if (call.data[2] == "c"): # Cache
+            if (call.data[4] == "1"): # On
+                kernel.changeCacheStatus(True)
+                bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Кэш включен", reply_markup=None)
+            elif (call.data[4] == "0"): # Off
+                if (call.data[6] == "0"): # Confim None
+                    configCacheOffMarkup = types.InlineKeyboardMarkup().add(types.InlineKeyboardButton(text="Да", callback_data="s-c-0-1"), types.InlineKeyboardButton(text="Нет", callback_data="s-c-0-2"))
+                    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Вы точно уверены в том, что хотите отключить кэш?", reply_markup=configCacheOffMarkup)
+                elif (call.data[6] == "1"): # Confim Ok
+                    kernel.changeCacheStatus(False)
+                    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Кэш выключен", reply_markup=None)
+                elif (call.data[6] == "2"): # Config No
+                    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Отменено", reply_markup=None)
+    elif (call.data[0] == "d"): # Delete
+        if (call.data[2] == "s"): # Cache
+            if (call.data[4] == "0"): # Confirm None
+                confimDeleteCacheMarkup = types.InlineKeyboardMarkup().add(types.InlineKeyboardButton("Да", callback_data="d-s-1"), types.InlineKeyboardButton("Нет", callback_data="d-s-2"))
+                bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Вы действительно хотите очистить весь кэш?", reply_markup=confimDeleteCacheMarkup)
+            elif (call.data[4] == "1"): # Confim Ok
+                kernel.deleteAllCache()
+                bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Удалено", reply_markup=None)
+            elif (call.data[4] == "2"): # Confim No
+                bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Отменено", reply_markup=None)
 
 bot.infinity_polling()
