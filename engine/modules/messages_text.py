@@ -35,4 +35,5 @@ def getMessages():
         "createPage_Ok" : "Создание страницы",
         "settingsText" : "Настройки",
         "settingsCache" : "Использование кэша: {0}",
+        "settingsManage" : "Режим дебага: {0}\nИспользование кэша: {1}"
     }
