@@ -26,3 +26,10 @@ class Database:
         cursor.close()
         connection.close()
         return result
+    def executeQuery(self, query):
+        connection = self.getConnection()
+        cursor = connection.cursor()
+        cursor.execute(query)
+        connection.commit()
+        cursor.close()
+        connection.close()
