@@ -1,12 +1,16 @@
 import configparser
+import engine.DB.DB as database
 
 class Kernel:
     def __init__(self):
         self.kernelConfig = configparser.ConfigParser()
         self.DBConfig = configparser.ConfigParser()
+
         self.kernelConfig.read('engine/config/kernel.conf')
         self.DBConfig.read('engine/config/db.conf')
+
         self.botToken = self.kernelConfig.get("BOT", "token")
+
         self.webDBConfig = {
             "username" : self.DBConfig.get("WEB", "username"),
             "password" : self.DBConfig.get("WEB", "password"),
@@ -24,6 +28,17 @@ class Kernel:
                 "database" : self.DBConfig.get("BOT", "database"),
                 "port" : self.DBConfig.get("BOT", "port"),
             }
+        
+        self.webDatabase = database.Database(
+            username=self.webDBConfig["username"],
+            password=self.webDBConfig["password"],
+            hostname=self.webDBConfig["hostname"],
+            database=self.webDBConfig["database"],
+            port=self.webDBConfig["port"],
+        )
+
+        print(self.webDatabase.getConnection())
+
     def getToken(self):
         return self.botToken
     def getWebDBConfig(self):
