@@ -1,0 +1,14 @@
+[WEB]
+username = 123
+password = 123
+hostname = 123
+database = 123
+port = 123
+
+[BOT]
+as-web = false
+username = 123
+password = 123
+hostname = 123
+database = 123
+port = 123
