@@ -7,6 +7,7 @@ bot = telebot.TeleBot(kernel.getToken())
 
 mainMenuButtons = kernel.getMainMenuButtons()
 settingsMenuButtons = kernel.getSettingsMenuButtons()
+settingsAdminMenuButtons = kernel.getSettingsAdminMenuButtons()
 botMessages = kernel.getMessages()
 
 mainMenuMarkup = types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -18,6 +19,11 @@ settingsMenuMarkup.add(types.KeyboardButton(settingsMenuButtons["cache"]), types
 settingsMenuMarkup.add(types.KeyboardButton(settingsMenuButtons["changeSiteInformation"]))
 settingsMenuMarkup.add(types.KeyboardButton(settingsMenuButtons["manage"]), types.KeyboardButton(settingsMenuButtons["admins"]), types.KeyboardButton(settingsMenuButtons["version"]))
 settingsMenuMarkup.add(types.KeyboardButton(settingsMenuButtons["back"]))
+
+settingsAdminMarkup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+settingsAdminMarkup.add(types.KeyboardButton(settingsAdminMenuButtons["createNewAdmin"]))
+settingsAdminMarkup.add(types.KeyboardButton(settingsAdminMenuButtons["checkInvite"]))
+settingsAdminMarkup.add(types.KeyboardButton(settingsAdminMenuButtons["backToSettings"]))
 
 unregisterMarkup = types.ReplyKeyboardMarkup(resize_keyboard=True).add(types.KeyboardButton(mainMenuButtons["RegisterUser"]))
 
@@ -36,8 +42,12 @@ def welcome(message):
 def answer(message):
     if ((kernel.isAdmin(message.from_user.id)) or (kernel.isDebug())):
         if (message.text == mainMenuButtons["CancelAction"]):
-            kernel.cancelAction(message.from_user.id)
-            bot.send_message(message.chat.id, botMessages["cancelAction"], reply_markup=mainMenuMarkup)
+            try:
+                kernel.cancelAction(message.from_user.id)
+            except:
+                pass
+            finally:
+                bot.send_message(message.chat.id, botMessages["cancelAction"], reply_markup=mainMenuMarkup)
         elif (kernel.isUserActive(message.from_user.id)):
             usersActions = kernel.getUsersActions(message.from_user.id)
             if (usersActions[0] == "pageCreate"):
@@ -49,6 +59,21 @@ def answer(message):
                         categoriesMarkup.add(types.InlineKeyboardButton(text=i[1], callback_data=f"c-p-3-{i[0]}"))
                     categoriesMarkup.add(types.InlineKeyboardButton(text="Без категории", callback_data="c-p-3-0"))
                     bot.send_message(message.chat.id, botMessages["createPage_enterCategory"], reply_markup=categoriesMarkup)
+            elif (usersActions[0] == "changeAdminName"):
+                if (usersActions[4] == 2): # Ввод имени
+                    kernel.changeAdminName(message.from_user.id, 2, message.text)
+                    confimChangeAdminNameMarkup = types.InlineKeyboardMarkup().add(types.InlineKeyboardButton("Изменить", callback_data=f"s-a-{usersActions[1]}-1"), types.InlineKeyboardButton("Отменить", callback_data=f"s-a-{usersActions[1]}-2"))
+                    outText = botMessages["confimChangeAdminName"].format(usersActions[1], message.text)
+                    bot.send_message(message.chat.id, outText, reply_markup=confimChangeAdminNameMarkup)
+            elif (usersActions[0] == "createAdminInvite"):
+                if (usersActions[4] == 2): # Ввод имени
+                    if (len(message.text) > 100):
+                        bot.send_message(message.chat.id, "Слишком длинное имя!")
+                    else:
+                        kernel.createAdminInvite(message.from_user.id, 2, message.text)
+                        confimCreateAdminMarkup = types.InlineKeyboardMarkup().add(types.InlineKeyboardButton("Да", callback_data="c-a-1"), types.InlineKeyboardButton("Отмена", callback_data="c-a-2"))
+                        outText = botMessages["confimCreateAdmin"].format(message.text)
+                        bot.send_message(message.chat.id, outText, reply_markup=confimCreateAdminMarkup)
         elif (message.text == mainMenuButtons["createNewPage"]):
             kernel.pageCreate(message.from_user.id, 1)
             bot.send_message(message.chat.id, botMessages["createPage_enterName"], reply_markup=cancelMarkup)
@@ -82,11 +107,28 @@ def answer(message):
                 debugSettingMarkup = types.InlineKeyboardMarkup().add(debugOnOffButton)
                 bot.send_message(message.chat.id, botMessages["settingsManage"].format(kernel.getStrFromBool(debugStatus), kernel.getStrFromBool(kernel.getCacheStatus())), reply_markup=debugSettingMarkup)
             elif (message.text == settingsMenuButtons["admins"]):
-                bot.send_message(message.chat.id, "Управление админами в разработке")
+                adminList = kernel.getAdminList()
+                adminListText = ""
+                adminListMarkup = types.InlineKeyboardMarkup()
+                j = 1
+                for i in adminList:
+                    adminListText += f"{j}. {i[4]}"
+                    adminListMarkup.add(types.InlineKeyboardButton(i[4], callback_data=f"o-a-{i[0]}"))
+                    j += 1
+                bot.send_message(message.chat.id, "Настройка администраторов", reply_markup=settingsAdminMarkup)
+                bot.send_message(message.chat.id, botMessages["settingsAdmin"].format(adminListText), reply_markup=adminListMarkup)
             elif (message.text == settingsMenuButtons["version"]):
                 bot.send_message(message.chat.id, "Просмотр версии в разработке")
             elif (message.text == settingsMenuButtons["back"]):
                 bot.send_message(message.chat.id, "Главная", reply_markup=mainMenuMarkup)
+        elif (kernel.checkButtonFromList("settingsAdmin", message.text)):
+            if (message.text == settingsAdminMenuButtons["createNewAdmin"]):
+                kernel.createAdminInvite(message.from_user.id, 1)
+                bot.send_message(message.chat.id, "Введине имя нового администратора", reply_markup=cancelMarkup)
+            elif (message.text == settingsAdminMenuButtons["checkInvite"]):
+                print("Проверка приглашений")
+            elif (message.text == settingsAdminMenuButtons["backToSettings"]):
+                bot.send_message(message.chat.id, "Настройки", reply_markup=settingsMenuMarkup)
     elif (message.text == mainMenuButtons["RegisterUser"]):
         bot.send_message(message.chat.id, "Регистрация пользователя в разработке")
     else:
@@ -117,6 +159,18 @@ def process(call):
                     kernel.pageCreate(call.from_user.id, 5)
                     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text=botMessages["createPage_Ok"], reply_markup=None)
                     bot.send_message(call.message.chat.id, "Главное меню", reply_markup=mainMenuMarkup)
+        if (call.data[2] == "a"): # Admin
+            if (call.data[4] == "1"): # Confirmed
+                kernel.createAdminInvite(call.from_user.id, 3)
+                userAction = kernel.getUsersActions(call.from_user.id)
+                outText = botMessages["adminCreated"].format(userAction[1], userAction[2])
+                bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text=outText, parse_mode="html", reply_markup=None)
+                bot.send_message(call.message.chat.id, "Настройки", reply_markup=settingsMenuMarkup)
+                kernel.cancelAction(call.from_user.id)
+            elif (call.data[4] == "2"): # Cancel
+                bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Отменено", reply_markup=None)
+                bot.send_message(call.message.chat.id, "Настройки", reply_markup=settingsMenuMarkup)
+                kernel.cancelAction(call.from_user.id)
     elif (call.data[0] == "s"): # Setting
         if (call.data[2] == "c"): # Cache
             if (call.data[4] == "1"): # On
@@ -147,6 +201,25 @@ def process(call):
             elif (call.data[4] == "0"): # Off
                 kernel.changeDebugStatus(False)
                 bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Дебаг выключен")
+        elif (call.data[2] == "a"): # Admin (Name)
+            if (call.data[5] == "-"):
+                adminID = call.data[4]
+                offset = 0
+            else:
+                adminID, offset = kernel.getIDWithOffset(call.data, 4)
+            confirmation = int(call.data[6 + offset])
+            if (confirmation == 0):
+                kernel.changeAdminName(call.from_user.id, 1, adminID)
+                bot.send_message(call.message.chat.id, "Изменение имени администратора", reply_markup=cancelMarkup)
+                bot.send_message(call.message.chat.id, text="Введите новое имя администратора")
+            elif (confirmation == 1):
+                kernel.changeAdminName(call.from_user.id, 3)
+                bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Изменено", reply_markup=None)
+                bot.send_message(call.message.chat.id, "Настройки", reply_markup=settingsMenuMarkup)
+            elif (confirmation == 2):
+                kernel.changeAdminName(call.from_user.id, 0)
+                bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Отменено", reply_markup=None)
+                bot.send_message(call.message.chat.id, "Настройки", reply_markup=settingsMenuMarkup)
     elif (call.data[0] == "d"): # Delete
         if (call.data[2] == "s"): # Cache
             if (call.data[4] == "0"): # Confirm None
@@ -157,5 +230,29 @@ def process(call):
                 bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Удалено", reply_markup=None)
             elif (call.data[4] == "2"): # Confim No
                 bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Отменено", reply_markup=None)
+        elif (call.data[2] == "a"): # Admin
+            if (call.data[5] == "-"):
+                adminID = call.data[4]
+            else:
+                adminID = kernel.getIDWithOffset(call.data, 4)
+            for i in range(4, len(call.data)):
+                pass
+            if (call.data[6] == "0"): # Confim None
+                confimDeleteAdminMarkup = types.InlineKeyboardMarkup().add(types.InlineKeyboardButton("Да", callback_data=f"d-a-{adminID}-1-0"), types.InlineKeyboardButton("Нет", callback_data=f"d-a-{adminID}-2"))
+                bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Вы действительно хотите удалить администратора?", reply_markup=confimDeleteAdminMarkup)
+            elif (call.data[6] == "1"): # Confim Ok
+                kernel.deleteAdmin(adminID)
+                kernel.getActualAdmins()
+                bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Удалено", reply_markup=None)
+                bot.send_message(call.message.chat.id, "Настройки", reply_markup=settingsMenuMarkup)
+            elif (call.data[6] == "2"): # Confim No
+                bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Отменено", reply_markup=None)
+                bot.send_message(call.message.chat.id, "Настройки", reply_markup=settingsMenuMarkup)
+    elif (call.data[0] == "o"): # Open
+        if (call.data[2] == "a"): # Admin
+            adminData = kernel.getAdminList(call.data[4])
+            outText = botMessages["OpenAdmin"].format(adminData[0], adminData[1], "", adminData[3], adminData[4])
+            editAdminMarkup = types.InlineKeyboardMarkup().add(types.InlineKeyboardButton("Изменить имя", callback_data=f"s-a-{adminData[0]}-0"), types.InlineKeyboardButton("Удалить", callback_data=f"d-a-{adminData[0]}-0"))
+            bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text=outText, reply_markup=editAdminMarkup)
 
 bot.infinity_polling()

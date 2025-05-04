@@ -9,6 +9,7 @@ class Kernel:
     def __init__(self):
         self.MainMenuButtons = messages.getMainMenuButtons()
         self.settingsButtons = messages.getSettingsMenuButtons()
+        self.settingsAdminButtons = messages.getSettingsAdminMenuButtons()
         self.Messages = messages.getMessages()
 
         self.kernelConfig = configparser.ConfigParser()
@@ -58,11 +59,8 @@ class Kernel:
             database=self.botDBConfig["database"],
             port=self.botDBConfig["port"],
         )
+        self.getActualAdmins()
         self.usersActions = {}
-        self.adminList = self.botDatabase.getData("SELECT * FROM `Admins_BOT`")
-        self.actualAdmins = []
-        for admin in self.adminList:
-            self.actualAdmins.append(admin[1])
         self.categoryList = self.webDatabase.getData("SELECT * FROM `categoryList`")
 
     def pageCreate(self, adminID, status, data = ""):
@@ -85,6 +83,31 @@ class Kernel:
             self.cancelAction(adminID)
         elif (status == 0): # Отмена. Удаление записи
             self.cancelAction(adminID)
+    def createAdminInvite(self, userID, status, data=""):
+        status = int(status)
+        if (status == 1): # Начало создания
+            self.usersActions[userID] = ["createAdminInvite", "", "", "", 2]
+        elif (status == 2): # Ввод имени
+            self.usersActions[userID][1] = data
+            self.usersActions[userID][4] = 3
+        elif (status == 3): # Подтверждение
+            inviteCode = functions.generateAdminInviteCode()
+            self.botDatabase.executeQuery(f"INSERT INTO `AdminInvitings_BOT` (`ID`, `Code`, `Name`, `CreationDate`, `Creator`, `Activated`, `ActivatedBy`) VALUES (NULL, '{inviteCode}', '{self.usersActions[userID][1]}', '{functions.getActualTime()}', '{userID}', '0', NULL)")
+            self.usersActions[userID][2] = inviteCode
+        elif (status == 0): # Отмена. Удаление записи
+            self.cancelAction(userID)
+    def changeAdminName(self, userID, status, data=""):
+        status = int(status)
+        if (status == 1): # Начало изменения имени. data - AdminID
+            self.usersActions[userID] = ["changeAdminName", data, "", "", 2]
+        elif (status == 2): # Ввод нового имени
+            self.usersActions[userID][2] = data
+            self.usersActions[userID][4] = 3
+        elif (status == 3): # Подтверждение. Изменение имени
+            self.botDatabase.executeQuery(f"UPDATE `Admins_BOT` SET `Name` = '{self.usersActions[userID][2]}' WHERE `Admins_BOT`.`ID` = {self.usersActions[userID][1]};")
+            self.cancelAction(userID)
+        elif (status == 0): # Отмена. Удаление записи
+            self.cancelAction(userID)
     def isUserActive(self, id):
         if (id in self.usersActions):
             return True
@@ -109,8 +132,12 @@ class Kernel:
         return self.MainMenuButtons
     def getSettingsMenuButtons(self):
         return self.settingsButtons
+    def getSettingsAdminMenuButtons(self):
+        return self.settingsAdminButtons
     def getMessages(self):
         return self.Messages
+    def getIDWithOffset(self, call, startPlace):
+        return functions.getIDWithOffset(call, startPlace)
     def getUsersActions(self, id = None):
         if (id == None):
             return self.usersActions
@@ -120,6 +147,16 @@ class Kernel:
         return self.usersActions[id]
     def getCategoryList(self):
         return self.categoryList
+    def getAdminList(self, adminID = None):
+        adminList = self.botDatabase.getData("SELECT * FROM `Admins_BOT`")
+        if (adminID == None):
+            return adminList
+        for i in adminList:
+            if (str(i[0]) == adminID):
+                return i
+        return None
+    def deleteAdmin(self, adminID):
+        self.botDatabase.executeQuery(f"DELETE FROM Admins_BOT WHERE `Admins_BOT`.`ID` = {adminID}")
     def getCategoryFromID(self, categoryID):
         categoryID = int(categoryID)
         for i in self.categoryList:
@@ -182,9 +219,19 @@ class Kernel:
             return True
         else:
             return False
+    def getActualAdmins(self):
+        self.adminList = self.botDatabase.getData("SELECT * FROM `Admins_BOT`")
+        self.actualAdmins = []
+        for admin in self.adminList:
+            self.actualAdmins.append(admin[1])
     def checkButtonFromList(self, type, data):
         if (type == "settings"):
             for i in self.settingsButtons:
                 if (self.settingsButtons[i] == data):
+                    return True
+            return False
+        elif (type == "settingsAdmin"):
+            for i in self.settingsAdminButtons:
+                if (self.settingsAdminButtons[i] == data):
                     return True
             return False
