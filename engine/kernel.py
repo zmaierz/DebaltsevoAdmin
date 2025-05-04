@@ -126,6 +126,34 @@ class Kernel:
             self.cancelAction(adminID)
         elif (status == 0): # Отмена. Удаление записи
             self.cancelAction(adminID)
+    def blockCreate(self, adminID, status, data=""):
+        status = int(status)
+        if (status == 1): # Начало создания блока (Указание PageID)
+            self.usersActions[adminID] = ["blockCreate", "", "", "", 2, data]
+        elif (status == 2): # Ввод типа блока
+            self.usersActions[adminID][1] = data
+            self.usersActions[adminID][4] = 3
+        elif (status == 3): # Ввод subdata
+            self.usersActions[adminID][2] = data
+            self.usersActions[adminID][4] = 4
+        elif (status == 4): # Ввод data
+            self.usersActions[adminID][3] = data
+            self.usersActions[adminID][4] = 5
+        elif (status == 5): # Подтверждение
+            pageTable = self.getPageData(self.usersActions[adminID][5])[0][4]
+            self.webDatabase.executeQuery(f"INSERT INTO `Testovaja_stranitsa_Page` (`ID`, `type`, `subdata`, `data`) VALUES (NULL, '{self.usersActions[adminID][1]}', '{self.usersActions[adminID][2]}', '{self.usersActions[adminID][3]}')")
+            self.deletePageCache(self.usersActions[adminID][5])
+        elif (status == 6): # Отмена
+            self.cancelAction(adminID)
+    def getBlockTypeList(self):
+        typeList = self.webDatabase.getData(f"SELECT * FROM `typeList`")
+        return typeList
+    def checkTypeInList(self, type):
+        typeList = self.webDatabase.getData(f"SELECT * FROM `typeList`")
+        for i in typeList:
+            if (type == i[0]):
+                return True
+        return False
     def createCategory(self, adminID, status, data = ""):
         status = int(status)
         if (status == 1): # Начало создания категории
@@ -322,9 +350,10 @@ class Kernel:
     def deletePageCache(self, pageID):
         pageData = self.webDatabase.getData(f"SELECT * FROM `pageList` WHERE `ID` = \"{pageID}\";")[0]
         pageCacheName = pageData[5]
-        systemCachePath = self.webPath + self.cachePath + "pages/" + pageCacheName
-        functions.deleteFile(systemCachePath)
-        self.webDatabase.executeQuery(f"UPDATE `pageList` SET `cacheName` = NULL WHERE `pageList`.`ID` = \"{pageID}\";")
+        if (pageCacheName != None):
+            systemCachePath = self.webPath + self.cachePath + "pages/" + pageCacheName
+            functions.deleteFile(systemCachePath)
+            self.webDatabase.executeQuery(f"UPDATE `pageList` SET `cacheName` = NULL WHERE `pageList`.`ID` = \"{pageID}\";")
     def deleteAllCache(self):
         functions.deleteDirectoryContent(self.webPath + self.cachePath + "system/")
         functions.deleteDirectoryContent(self.webPath + self.cachePath + "pages/")
