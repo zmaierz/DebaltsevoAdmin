@@ -61,7 +61,35 @@ class Kernel:
         )
         self.getActualAdmins()
         self.usersActions = {}
+        self.usersAuth = {}
         self.categoryList = self.webDatabase.getData("SELECT * FROM `categoryList`")
+
+    def authUser(self, userID, status, data = ""):
+        status = int(status)
+        if (status == 1): # Начало авторизации
+            self.usersAuth[userID] = ""
+        elif (status == 2): # Ввод кода
+            self.usersAuth[userID] = data
+    
+    def checkAdminInvite(self, code):
+        admin = self.botDatabase.getData(f"SELECT * FROM `AdminInvitings_BOT` WHERE `Code` = \"{code}\";")
+        if (admin == []):
+            return False
+        else:
+            return admin[0][2]
+        
+    def delAuthUser(self, userID):
+        del self.usersAuth[userID]
+
+    def createAdmin(self, userID, inviteCode):
+        invite = self.botDatabase.getData(f"SELECT * FROM `AdminInvitings_BOT` WHERE `Code` = \"{inviteCode}\";")[0]
+        inviteID = invite[0]
+        inviteCreator = invite[4]
+        inviteAdminName = invite[2]
+        self.botDatabase.executeQuery(f"UPDATE `AdminInvitings_BOT` SET `Activated` = '1' WHERE `AdminInvitings_BOT`.`ID` = {inviteID};")
+        self.botDatabase.executeQuery(f"INSERT INTO `Admins_BOT` (`ID`, `TID`, `CreationDate`, `Creator`, `Name`) VALUES (NULL, '{userID}', '{functions.getActualTime()}', '{inviteCreator}', '{inviteAdminName}')")
+        self.botDatabase.executeQuery(f"UPDATE `AdminInvitings_BOT` SET `ActivatedBy` = '{userID}' WHERE `AdminInvitings_BOT`.`ID` = {inviteID};")
+        self.getActualAdmins()
 
     def pageCreate(self, adminID, status, data = ""):
         status = int(status)
@@ -112,6 +140,10 @@ class Kernel:
         if (id in self.usersActions):
             return True
         return False
+    def isUserAuth(self, id):
+        if (id in self.usersAuth):
+            return True
+        return False
     def createPageToWeb(self, pageName, pageAlias, pageCategory, pageHide):
         addPageToListQuery = f"INSERT INTO `pageList` (`ID`, `name`, `alias`, `category`, `tableName`, `cacheName`, `isHide`) VALUES (NULL, '{pageName}', '{pageAlias}', '{pageCategory}', '{pageAlias}_Page', NULL, '{pageHide}')"
         createPageTableQuery = f"CREATE TABLE `debaltsevo-web`.`{pageAlias}_Page` (`ID` INT NOT NULL AUTO_INCREMENT , `type` VARCHAR(32) NOT NULL , `subdata` VARCHAR(128) NOT NULL , `data` TEXT NOT NULL , PRIMARY KEY (`ID`)) ENGINE = InnoDB;"
@@ -156,6 +188,8 @@ class Kernel:
                 return i
         return None
     def deleteAdmin(self, adminID):
+        adminTID = self.getAdminList(adminID)[1]
+        self.botDatabase.executeQuery(f"DELETE FROM AdminInvitings_BOT WHERE `AdminInvitings_BOT`.`ActivatedBy` = {adminTID}")
         self.botDatabase.executeQuery(f"DELETE FROM Admins_BOT WHERE `Admins_BOT`.`ID` = {adminID}")
     def getCategoryFromID(self, categoryID):
         categoryID = int(categoryID)

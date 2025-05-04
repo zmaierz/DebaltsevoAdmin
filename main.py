@@ -40,7 +40,18 @@ def welcome(message):
 
 @bot.message_handler(content_types='text')
 def answer(message):
-    if ((kernel.isAdmin(message.from_user.id)) or (kernel.isDebug())):
+    if (kernel.isUserAuth(message.from_user.id)):
+        kernel.authUser(message.from_user.id, 2, message.text)
+        isActive = kernel.checkAdminInvite(message.text)
+        if (isActive == False):
+            bot.send_message(message.chat.id, "Неверный код-приглашение!")
+            kernel.delAuthUser()
+        else:
+            kernel.createAdmin(message.from_user.id, message.text)
+            outText = botMessages["registerUserSuccess"].format(message.from_user.first_name, isActive)
+            kernel.delAuthUser(message.from_user.id)
+            bot.send_message(message.chat.id, outText, reply_markup=mainMenuMarkup)
+    elif ((kernel.isAdmin(message.from_user.id)) or (kernel.isDebug())):
         if (message.text == mainMenuButtons["CancelAction"]):
             try:
                 kernel.cancelAction(message.from_user.id)
@@ -112,7 +123,7 @@ def answer(message):
                 adminListMarkup = types.InlineKeyboardMarkup()
                 j = 1
                 for i in adminList:
-                    adminListText += f"{j}. {i[4]}"
+                    adminListText += f"{j}. {i[4]}\n"
                     adminListMarkup.add(types.InlineKeyboardButton(i[4], callback_data=f"o-a-{i[0]}"))
                     j += 1
                 bot.send_message(message.chat.id, "Настройка администраторов", reply_markup=settingsAdminMarkup)
@@ -130,9 +141,10 @@ def answer(message):
             elif (message.text == settingsAdminMenuButtons["backToSettings"]):
                 bot.send_message(message.chat.id, "Настройки", reply_markup=settingsMenuMarkup)
     elif (message.text == mainMenuButtons["RegisterUser"]):
-        bot.send_message(message.chat.id, "Регистрация пользователя в разработке")
+        bot.send_message(message.chat.id, "Введите код-приглашение")
+        kernel.authUser(message.from_user.id, 1)
     else:
-        bot.send_message(message.chat.id, botMessages["unregisterAnswer"])
+        bot.send_message(message.chat.id, botMessages["unregisterAnswer"], reply_markup=unregisterMarkup)
 
 @bot.callback_query_handler(func=lambda call: True)
 def process(call):
@@ -251,7 +263,7 @@ def process(call):
     elif (call.data[0] == "o"): # Open
         if (call.data[2] == "a"): # Admin
             adminData = kernel.getAdminList(call.data[4])
-            outText = botMessages["OpenAdmin"].format(adminData[0], adminData[1], "", adminData[3], adminData[4])
+            outText = botMessages["OpenAdmin"].format(adminData[0], adminData[1], adminData[2], adminData[3], adminData[4])
             editAdminMarkup = types.InlineKeyboardMarkup().add(types.InlineKeyboardButton("Изменить имя", callback_data=f"s-a-{adminData[0]}-0"), types.InlineKeyboardButton("Удалить", callback_data=f"d-a-{adminData[0]}-0"))
             bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text=outText, reply_markup=editAdminMarkup)
 
