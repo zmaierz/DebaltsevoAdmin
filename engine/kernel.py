@@ -193,7 +193,6 @@ class Kernel:
             pageTable = pageData[4]
             pageContent = self.webDatabase.getData(f"SELECT * FROM `{pageTable}_Page`")
             return pageData, pageContent
-
     def createCategoryInDB(self, categoryName, categoryUrl):
         highNumber = int(self.getCategoryLastNumber()) + 1
         self.webDatabase.executeQuery(f"INSERT INTO `categoryList` (`number`, `name`, `url`) VALUES ('{highNumber}', '{categoryName}', '{categoryUrl}')")
@@ -211,6 +210,11 @@ class Kernel:
         functions.deleteFile(systemCachePath + "footer.html")
         functions.deleteFile(systemCachePath + "header.html")
         self.updateCategoryList()
+    def deletePage(self, pageID):
+        pageData = self.webDatabase.getData(f"SELECT * FROM `pageList` WHERE `ID` = \"{pageID}\";")[0]
+        pageTable = pageData[4]
+        self.webDatabase.executeQuery(f"DELETE FROM `pageList` WHERE `pageList`.`ID` = {pageID}")
+        self.webDatabase.executeQuery(f"DROP TABLE `{pageTable}_Page`")
     def getCategoryPageList(self, categoryName):
         pageCategoryList = self.webDatabase.getData(f"SELECT * FROM `pageList` WHERE `category` = \"{categoryName}\";")
         return pageCategoryList

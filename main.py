@@ -389,6 +389,25 @@ def process(call):
             elif (deleteStatus == 2): # Confim No
                 bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Отменено", reply_markup=None)
                 bot.send_message(call.message.chat.id, "Главное меню", reply_markup=mainMenuMarkup)
+        elif (call.data[2] == "p"): # Page
+            if (call.data[5] == "-"):
+                pageID = call.data[4]
+                offset = 0
+            else:
+                pageID, offset = kernel.getIDWithOffset(call.data, 4)
+                offset -= 1
+            pageID = int(pageID)
+            deleteStatus = int(call.data[6 + offset])
+            if (deleteStatus == 0): # Confim None
+                confimPageDeleteMarkup = types.InlineKeyboardMarkup().add(types.InlineKeyboardButton("Да", callback_data=f"d-p-{pageID}-1"), types.InlineKeyboardButton("Нет", callback_data=f"d-p-{pageID}-2"))
+                bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Вы действительно хотите удалить страницу?", reply_markup=confimPageDeleteMarkup)
+            elif (deleteStatus == 1): # Confim Ok
+                kernel.deletePage(pageID)
+                bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Страница удалена", reply_markup=None)
+                bot.send_message(call.message.chat.id, "Главное меню", reply_markup=mainMenuMarkup)
+            elif (deleteStatus == 2): # Confim No
+                bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Отменено", reply_markup=None)
+                bot.send_message(call.message.chat.id, "Главное меню", reply_markup=mainMenuMarkup)
     elif (call.data[0] == "o"): # Open
         if (call.data[2] == "a"): # Admin
             if (len(call.data) == 4):
