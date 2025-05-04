@@ -399,8 +399,30 @@ def process(call):
             pageListMarkup = types.InlineKeyboardMarkup()
             j = 1
             for i in pageList:
-                outText += f"{j}. {i[1]}"
+                outText += f"{j}. {i[1]}\n"
                 pageListMarkup.add(types.InlineKeyboardButton(i[1], callback_data=f"o-p-{i[0]}"))
+                j += 1
             bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text=outText, reply_markup=pageListMarkup)
-
+        elif (call.data[2] == "p"):
+            if (len(call.data) == 4):
+                pageID = call.data[4]
+                offset = 0
+            else:
+                pageID, offset = kernel.getIDWithOffset(call.data, 4)
+            pageID = int(pageID)
+            pageData, pageContent = kernel.getPageData(pageID)
+            outText = botMessages["pageData"].format(pageData[0], pageData[1], pageData[2], pageData[3], pageData[4], kernel.getStrFromBool(pageData[5]), kernel.getStrFromBool(pageData[6]))
+            pageOpenMarkup = types.InlineKeyboardMarkup()
+            pageOpenMarkup.add(
+                types.InlineKeyboardButton("Переименовать страницу", callback_data=f"s-p-{pageID}"),
+                types.InlineKeyboardButton("Изменить контент страницы", callback_data=f"s-r-{pageID}"),
+            )
+            if (pageData[5] != None):
+                pageOpenMarkup.add(types.InlineKeyboardButton("Удалить кэш страницы", callback_data=f"d-r-{pageID}"))
+            pageOpenMarkup.add(
+                types.InlineKeyboardButton("Скрыть страницу", callback_data=f"s-h-{pageID}"),
+                types.InlineKeyboardButton("Удалить страницу", callback_data=f"d-p-{pageID}")
+            )
+            bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text=outText, reply_markup=pageOpenMarkup)
+            
 bot.infinity_polling()

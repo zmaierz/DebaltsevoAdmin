@@ -57,5 +57,6 @@ def getMessages():
         "inviteList" : "Список неактивированных приглашений:\n",
         "inviteListItemOpen" : "ID: {0}\nКод: <code>{1}</code>\nИмя: {2}\nДата создания: {3}\n",
         "checkSystemVersion" : "Версия бота: {0}\nВерсия сайта: {1}\nВерсия хоста: {2}",
-        "openCategory" : "ID: {0}\nНазвание: {1}\nurl: {2}"
+        "openCategory" : "ID: {0}\nНазвание: {1}\nurl: {2}",
+        "pageData" : "Информация о странице:\nID: {0}\nИмя: {1}\nAlias: {2}\nКатегория: {3}\nТаблица: {4}\nКэш: {5}\nСкрыта: {6}",
     }

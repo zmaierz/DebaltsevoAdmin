@@ -175,7 +175,7 @@ class Kernel:
             return True
         return False
     def createPageToWeb(self, pageName, pageAlias, pageCategory, pageHide):
-        addPageToListQuery = f"INSERT INTO `pageList` (`ID`, `name`, `alias`, `category`, `tableName`, `cacheName`, `isHide`) VALUES (NULL, '{pageName}', '{pageAlias}', '{pageCategory}', '{pageAlias}_Page', NULL, '{pageHide}')"
+        addPageToListQuery = f"INSERT INTO `pageList` (`ID`, `name`, `alias`, `category`, `tableName`, `cacheName`, `isHide`) VALUES (NULL, '{pageName}', '{pageAlias}', '{pageCategory}', '{pageAlias}', NULL, '{pageHide}')"
         createPageTableQuery = f"CREATE TABLE `debaltsevo-web`.`{pageAlias}_Page` (`ID` INT NOT NULL AUTO_INCREMENT , `type` VARCHAR(32) NOT NULL , `subdata` VARCHAR(128) NOT NULL , `data` TEXT NOT NULL , PRIMARY KEY (`ID`)) ENGINE = InnoDB;"
         createPageConnectionQuery = f"ALTER TABLE `{pageAlias}_Page` ADD FOREIGN KEY (`type`) REFERENCES `typeList`(`Name`) ON DELETE RESTRICT ON UPDATE RESTRICT;"
         self.webDatabase.executeQuery(addPageToListQuery)
@@ -184,6 +184,16 @@ class Kernel:
         systemCachePath = self.webPath + self.cachePath + "system/"
         functions.deleteFile(systemCachePath + "footer.html")
         functions.deleteFile(systemCachePath + "header.html")
+    def getPageData(self, pageID):
+        pageData = self.webDatabase.getData(f"SELECT * FROM `pageList` WHERE `ID` = \"{pageID}\";")
+        if (pageData == []):
+            return None
+        else:
+            pageData = pageData[0]
+            pageTable = pageData[4]
+            pageContent = self.webDatabase.getData(f"SELECT * FROM `{pageTable}_Page`")
+            return pageData, pageContent
+
     def createCategoryInDB(self, categoryName, categoryUrl):
         highNumber = int(self.getCategoryLastNumber()) + 1
         self.webDatabase.executeQuery(f"INSERT INTO `categoryList` (`number`, `name`, `url`) VALUES ('{highNumber}', '{categoryName}', '{categoryUrl}')")
@@ -234,7 +244,6 @@ class Kernel:
         if (id == None):
             return self.usersActions
         if (id not in self.usersActions):
-            print(f"ID {id} не найден!\n{self.usersActions}")
             return None
         return self.usersActions[id]
     def getCategoryList(self):
@@ -258,11 +267,12 @@ class Kernel:
                 return i[1]
         return None
     def getStrFromBool(self, temp):
-        temp = int(temp)
-        if (temp == 1):
-            return "🟢 Да"
-        else:
+        if (temp == None):
+            temp = 0
+        if (temp == 0 or temp == "0"):
             return "🟥 Нет"
+        else:
+            return "🟢 Да"
     def cancelAction(self, id):
         del self.usersActions[id]
     def isDebug(self):
