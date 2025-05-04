@@ -22,6 +22,7 @@ class Kernel:
         self.webPath = self.kernelConfig.get("BOT", "web-path")
         self.cachePath = self.kernelConfig.get("BOT", "cache-path")
         debug = self.kernelConfig.get("BOT", "debug")
+        self.hostVersion = self.kernelConfig.get("BOT", "hostname")
         if (debug == "true"):
             self.debug = True
         else:
@@ -65,6 +66,8 @@ class Kernel:
         self.usersAuth = {}
         self.categoryList = self.webDatabase.getData("SELECT * FROM `categoryList`")
 
+    def getVersions(self):
+        return [self.systemData["version"]["botVersion"], self.systemData["version"]["siteVersion"], self.hostVersion]
     def authUser(self, userID, status, data = ""):
         status = int(status)
         if (status == 1): # Начало авторизации

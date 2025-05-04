@@ -129,7 +129,9 @@ def answer(message):
                 bot.send_message(message.chat.id, "Настройка администраторов", reply_markup=settingsAdminMarkup)
                 bot.send_message(message.chat.id, botMessages["settingsAdmin"].format(adminListText), reply_markup=adminListMarkup)
             elif (message.text == settingsMenuButtons["version"]):
-                bot.send_message(message.chat.id, "Просмотр версии в разработке")
+                versions = kernel.getVersions()
+                outText = botMessages["checkSystemVersion"].format(versions[0], versions[1], versions[2])
+                bot.send_message(message.chat.id, outText)
             elif (message.text == settingsMenuButtons["back"]):
                 bot.send_message(message.chat.id, "Главная", reply_markup=mainMenuMarkup)
         elif (kernel.checkButtonFromList("settingsAdmin", message.text)):

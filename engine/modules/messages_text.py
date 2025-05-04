@@ -50,5 +50,6 @@ def getMessages():
         "confimCreateAdmin" : "Вы действительно хотите создать приглашение для администратора {0}?",
         "adminCreated" : "Создан администратор {0}\n\nСсылка-приглашение: <code>{1}</code>",
         "inviteList" : "Список неактивированных приглашений:\n",
-        "inviteListItemOpen" : "ID: {0}\nКод: <code>{1}</code>\nИмя: {2}\nДата создания: {3}\n"
+        "inviteListItemOpen" : "ID: {0}\nКод: <code>{1}</code>\nИмя: {2}\nДата создания: {3}\n",
+        "checkSystemVersion" : "Версия бота: {0}\nВерсия сайта: {1}\nВерсия хоста: {2}"
     }
