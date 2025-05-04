@@ -1,6 +1,7 @@
 import os
 import random
 import string
+import pickle
 from datetime import datetime
 from transliterate import translit, get_available_language_codes
 
@@ -53,3 +54,8 @@ def deleteDirectoryContent(path):
                 os.remove(file_path)
         except Exception as e:
             pass
+
+def getSystemData():
+    file = open("engine/systemData.db", "rb")
+    data = pickle.load(file)
+    return data

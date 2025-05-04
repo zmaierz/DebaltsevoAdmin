@@ -59,6 +59,7 @@ class Kernel:
             database=self.botDBConfig["database"],
             port=self.botDBConfig["port"],
         )
+        self.systemData = functions.getSystemData()
         self.getActualAdmins()
         self.usersActions = {}
         self.usersAuth = {}
