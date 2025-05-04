@@ -381,5 +381,26 @@ def process(call):
                 types.InlineKeyboardButton("Удалить категорию", callback_data=f"d-c-{categoryID}-0")
             )
             bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text=outText, reply_markup=openCategoryMarkup)
+        elif (call.data[2] == "s"): # Category pages
+            if (len(call.data) == 4):
+                categoryID = call.data[4]
+                offset = 0
+            else:
+                categoryID, offset = kernel.getIDWithOffset(call.data, 4)
+            categoryID = int(categoryID)
+            categoryList = kernel.getCategoryList()
+            categoryName = None
+            for i in categoryList:
+                if categoryID == i[0]:
+                    categoryName = i[1]
+                    break
+            pageList = kernel.getCategoryPageList(categoryName)
+            outText = "Список страниц:\n"
+            pageListMarkup = types.InlineKeyboardMarkup()
+            j = 1
+            for i in pageList:
+                outText += f"{j}. {i[1]}"
+                pageListMarkup.add(types.InlineKeyboardButton(i[1], callback_data=f"o-p-{i[0]}"))
+            bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text=outText, reply_markup=pageListMarkup)
 
 bot.infinity_polling()
