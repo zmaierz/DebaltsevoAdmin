@@ -315,9 +315,16 @@ class Kernel:
         endConfig = cacheStatus[2].partition(oldStatus)
         newConfig += newStatus + endConfig[2]
         functions.writeFileContent(self.webPath + "engine/config/kernelConfig.php", newConfig)
+    def deletePageCache(self, pageID):
+        pageData = self.webDatabase.getData(f"SELECT * FROM `pageList` WHERE `ID` = \"{pageID}\";")[0]
+        pageCacheName = pageData[5]
+        systemCachePath = self.webPath + self.cachePath + "pages/" + pageCacheName
+        functions.deleteFile(systemCachePath)
+        self.webDatabase.executeQuery(f"UPDATE `pageList` SET `cacheName` = NULL WHERE `pageList`.`ID` = \"{pageID}\";")
     def deleteAllCache(self):
         functions.deleteDirectoryContent(self.webPath + self.cachePath + "system/")
         functions.deleteDirectoryContent(self.webPath + self.cachePath + "pages/")
+        self.webDatabase.executeQuery("UPDATE `pageList` SET `cacheName` = NULL WHERE `pageList`.`cacheName` IS NOT NULL;")
     def isAdmin(self, id):
         if (str(id) in self.actualAdmins):
             return True

@@ -343,6 +343,24 @@ def process(call):
             elif (deleteStatus == 2): # Confim No
                 bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Отменено", reply_markup=None)
                 bot.send_message(call.message.chat.id, "Главное меню", reply_markup=mainMenuMarkup)
+        elif (call.data[2] == "r"): # Page Cache
+            if (call.data[5] == "-"):
+                pageID = call.data[4]
+                offset = 0
+            else:
+                pageID, offset = kernel.getIDWithOffset(call.data, 4)
+            pageID = int(pageID)
+            deleteStatus = int(call.data[6 + offset - 1])
+            if (deleteStatus == 0): # Confim None
+                confimDeletePageCache = types.InlineKeyboardMarkup().add(types.InlineKeyboardButton("Да", callback_data=f"d-r-{pageID}-1"), types.InlineKeyboardButton("Нет", callback_data=f"d-r-{pageID}-2"))
+                bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Вы действительно хотите очистить кэш страницы?", reply_markup=confimDeletePageCache)
+            elif (deleteStatus == 1): # Confim Ok
+                kernel.deletePageCache(pageID)
+                bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Кэш страницы удален", reply_markup=None)
+                bot.send_message(call.message.chat.id, "Главное меню", reply_markup=mainMenuMarkup)
+            elif (deleteStatus == 2): # Confim No
+                bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Отменено", reply_markup=None)
+                bot.send_message(call.message.chat.id, "Главное меню", reply_markup=mainMenuMarkup)
     elif (call.data[0] == "o"): # Open
         if (call.data[2] == "a"): # Admin
             if (len(call.data) == 4):
@@ -418,10 +436,10 @@ def process(call):
                 types.InlineKeyboardButton("Изменить контент страницы", callback_data=f"s-r-{pageID}"),
             )
             if (pageData[5] != None):
-                pageOpenMarkup.add(types.InlineKeyboardButton("Удалить кэш страницы", callback_data=f"d-r-{pageID}"))
+                pageOpenMarkup.add(types.InlineKeyboardButton("Удалить кэш страницы", callback_data=f"d-r-{pageID}-0"))
             pageOpenMarkup.add(
-                types.InlineKeyboardButton("Скрыть страницу", callback_data=f"s-h-{pageID}"),
-                types.InlineKeyboardButton("Удалить страницу", callback_data=f"d-p-{pageID}")
+                types.InlineKeyboardButton("Скрыть страницу", callback_data=f"s-h-{pageID}-0"),
+                types.InlineKeyboardButton("Удалить страницу", callback_data=f"d-p-{pageID}-0")
             )
             bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text=outText, reply_markup=pageOpenMarkup)
             
