@@ -185,12 +185,25 @@ class Kernel:
         functions.deleteFile(systemCachePath + "footer.html")
         functions.deleteFile(systemCachePath + "header.html")
     def createCategoryInDB(self, categoryName, categoryUrl):
-        highNumber = self.getCategoryLastNumber()
+        highNumber = int(self.getCategoryLastNumber()) + 1
         self.webDatabase.executeQuery(f"INSERT INTO `categoryList` (`number`, `name`, `url`) VALUES ('{highNumber}', '{categoryName}', '{categoryUrl}')")
         systemCachePath = self.webPath + self.cachePath + "system/"
         functions.deleteFile(systemCachePath + "footer.html")
         functions.deleteFile(systemCachePath + "header.html")
         self.updateCategoryList()
+    def deleteCategoryFromDB(self, categoryName):
+        pageCategoryList = self.getCategoryPageList(categoryName)
+        for i in pageCategoryList:
+            self.webDatabase.executeQuery(f"DROP TABLE `{i[4]}`")
+        self.webDatabase.executeQuery(f"DELETE FROM pageList WHERE `pageList`.`category` = \"{categoryName}\";")
+        self.webDatabase.executeQuery(f"DELETE FROM `categoryList` WHERE `categoryList`.`name` = '{categoryName}'")
+        systemCachePath = self.webPath + self.cachePath + "system/"
+        functions.deleteFile(systemCachePath + "footer.html")
+        functions.deleteFile(systemCachePath + "header.html")
+        self.updateCategoryList()
+    def getCategoryPageList(self, categoryName):
+        pageCategoryList = self.webDatabase.getData(f"SELECT * FROM `pageList` WHERE `category` = \"{categoryName}\";")
+        return pageCategoryList
     def getCategoryLastNumber(self):
         highNumber = 0
         for i in self.categoryList:

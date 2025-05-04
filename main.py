@@ -319,6 +319,30 @@ def process(call):
                 bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Удалено", reply_markup=None)
             elif (call.data[6 + offset] == "2"): # Confim No
                 bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Отменено", reply_markup=None)
+        elif (call.data[2] == "c"): # Category
+            if (call.data[5] == "-"):
+                categoryID = call.data[4]
+                offset = 0
+            else:
+                categoryID, offset = kernel.getIDWithOffset(call.data, 4)
+            categoryID = int(categoryID)
+            categoryList = kernel.getCategoryList()
+            categoryName = None
+            for i in categoryList:
+                if categoryID == i[0]:
+                    categoryName = i[1]
+                    break
+            deleteStatus = int(call.data[6 + offset])
+            if (deleteStatus == 0): # Confim None
+                confimDeleteCategoryMarkup = types.InlineKeyboardMarkup().add(types.InlineKeyboardButton("Да", callback_data=f"d-c-{categoryID}-1"), types.InlineKeyboardButton("Нет", callback_data=f"d-c-{categoryID}-2"))
+                bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Вы действительно хотите удалить категорию?", reply_markup=confimDeleteCategoryMarkup)
+            elif (deleteStatus == 1): # Confim Ok
+                kernel.deleteCategoryFromDB(categoryName)
+                bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Удалено", reply_markup=None)
+                bot.send_message(call.message.chat.id, "Главное меню", reply_markup=mainMenuMarkup)
+            elif (deleteStatus == 2): # Confim No
+                bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Отменено", reply_markup=None)
+                bot.send_message(call.message.chat.id, "Главное меню", reply_markup=mainMenuMarkup)
     elif (call.data[0] == "o"): # Open
         if (call.data[2] == "a"): # Admin
             if (len(call.data) == 4):
@@ -338,5 +362,24 @@ def process(call):
             outText = botMessages["inviteListItemOpen"].format(invite[0], invite[1], invite[2], invite[3])
             inviteDeleteMarkup = types.InlineKeyboardMarkup().add(types.InlineKeyboardButton("Удалить", callback_data=f"d-i-{inviteID}-0"))
             bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text=outText, parse_mode="html", reply_markup=inviteDeleteMarkup)
+        elif (call.data[2] == "c"): # Category
+            if (len(call.data) == 4):
+                categoryID = call.data[4]
+                offset = 0
+            else:
+                categoryID, offset = kernel.getIDWithOffset(call.data, 4)
+            categoryID = int(categoryID)
+            categoryList = kernel.getCategoryList()
+            for i in categoryList:
+                if categoryID == i[0]:
+                    category = i
+                    break
+            outText = botMessages["openCategory"].format(category[0], category[1], category[2])
+            openCategoryMarkup = types.InlineKeyboardMarkup()
+            openCategoryMarkup.add(
+                types.InlineKeyboardButton("Просмотр страниц", callback_data=f"o-s-{categoryID}"),
+                types.InlineKeyboardButton("Удалить категорию", callback_data=f"d-c-{categoryID}-0")
+            )
+            bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text=outText, reply_markup=openCategoryMarkup)
 
 bot.infinity_polling()
