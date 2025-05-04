@@ -215,7 +215,7 @@ def process(call):
                 kernel.createCategory(call.from_user.id, 0)
                 bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Отменено", reply_markup=None)
                 bot.send_message(call.message.chat.id, "Главное меню", reply_markup=mainMenuMarkup)
-        if (call.data[2] == "a"): # Admin
+        elif (call.data[2] == "a"): # Admin
             if (call.data[4] == "1"): # Confirmed
                 kernel.createAdminInvite(call.from_user.id, 3)
                 userAction = kernel.getUsersActions(call.from_user.id)
@@ -227,6 +227,7 @@ def process(call):
                 bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Отменено", reply_markup=None)
                 bot.send_message(call.message.chat.id, "Настройки", reply_markup=settingsMenuMarkup)
                 kernel.cancelAction(call.from_user.id)
+        
     elif (call.data[0] == "s"): # Setting
         if (call.data[2] == "c"): # Cache
             if (call.data[4] == "1"): # On
@@ -304,6 +305,23 @@ def process(call):
             elif (status == 2): # Confim No
                 bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Отменено", reply_markup=None)
                 bot.send_message(call.message.chat.id, "Главная", reply_markup=mainMenuMarkup)
+        elif (call.data[2] == "r"): # Page content
+            if (len(call.data) == 4):
+                pageID = call.data[4]
+                offset = 0
+            else:
+                pageID, offset = kernel.getIDWithOffset(call.data, 4)
+            pageData, pageContent = kernel.getPageData(pageID)
+            outData = "Содержание страницы:\n"
+            j = 0
+            pageOpenContentMarkup = types.InlineKeyboardMarkup()
+            for i in pageContent:
+                outData += f"{j}. {i[1]}: {i[3]} ({i[2]})\n"
+                pageOpenContentMarkup.add(types.InlineKeyboardButton(text=f"{j}. {i[3][:10]}", callback_data=f"o-b-{pageID}-{i[0]}"))
+                j += 1
+            pageOpenContentMarkup.add(types.InlineKeyboardButton(text="Создать блок", callback_data=f"c-b-{pageID}"))
+            pageOpenContentMarkup.add(types.InlineKeyboardButton(text="Назад", callback_data=f"o-p-{pageID}"))
+            bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text=outData, reply_markup=pageOpenContentMarkup)
     elif (call.data[0] == "d"): # Delete
         if (call.data[2] == "s"): # Cache
             if (call.data[4] == "0"): # Confirm None
