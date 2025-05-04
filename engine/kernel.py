@@ -64,7 +64,7 @@ class Kernel:
         self.getActualAdmins()
         self.usersActions = {}
         self.usersAuth = {}
-        self.categoryList = self.webDatabase.getData("SELECT * FROM `categoryList`")
+        self.updateCategoryList()
 
     def getVersions(self):
         return [self.systemData["version"]["botVersion"], self.systemData["version"]["siteVersion"], self.hostVersion]
@@ -184,6 +184,8 @@ class Kernel:
         return self.Messages
     def getIDWithOffset(self, call, startPlace):
         return functions.getIDWithOffset(call, startPlace)
+    def updateCategoryList(self):
+        self.categoryList = self.webDatabase.getData("SELECT * FROM `categoryList`")
     def getUsersActions(self, id = None):
         if (id == None):
             return self.usersActions
