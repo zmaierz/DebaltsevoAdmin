@@ -1,9 +1,20 @@
 import os
+import random
+import string
+from datetime import datetime
 from transliterate import translit, get_available_language_codes
 
 def translitText(text):
     out = translit(text, 'ru', reversed=True)
     return out
+
+def getActualTime():
+    return datetime.now()
+
+def generateAdminInviteCode():
+    text = [random.choice(string.ascii_lowercase + string.digits if i != 5 else string.ascii_uppercase) for i in range(20)]
+    code = ''.join(text)
+    return code
 
 def getIDWithOffset(call, startPlace):
     idOffset = 0
