@@ -91,6 +91,16 @@ class Kernel:
         self.botDatabase.executeQuery(f"UPDATE `AdminInvitings_BOT` SET `ActivatedBy` = '{userID}' WHERE `AdminInvitings_BOT`.`ID` = {inviteID};")
         self.getActualAdmins()
 
+    def getInvitings(self, id = None):
+        if (id == None):
+            inviteList = self.botDatabase.getData("SELECT * FROM `AdminInvitings_BOT` WHERE `Activated` = 0;")
+        else:
+            inviteList = self.botDatabase.getData(f"SELECT * FROM `AdminInvitings_BOT` WHERE `ID` = {id};")[0]
+        return inviteList
+
+    def deleteAdminInvite(self, id):
+        self.botDatabase.executeQuery(f"DELETE FROM AdminInvitings_BOT WHERE `AdminInvitings_BOT`.`ID` = {id}")
+
     def pageCreate(self, adminID, status, data = ""):
         status = int(status)
         if (status == 1): # Начала создания страницы

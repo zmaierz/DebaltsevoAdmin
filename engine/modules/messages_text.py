@@ -48,5 +48,7 @@ def getMessages():
         "OpenAdmin" : "Admin ID: {0}\nTelegram ID: {1}\nДата создания: {2}\nСоздал: {3}\nИмя: {4}",
         "confimChangeAdminName" : "Действительно изменить имя администратора?\nAdminID: {0}\nНовое имя: {1}",
         "confimCreateAdmin" : "Вы действительно хотите создать приглашение для администратора {0}?",
-        "adminCreated" : "Создан администратор {0}\n\nСсылка-приглашение: <code>{1}</code>"
+        "adminCreated" : "Создан администратор {0}\n\nСсылка-приглашение: <code>{1}</code>",
+        "inviteList" : "Список неактивированных приглашений:\n",
+        "inviteListItemOpen" : "ID: {0}\nКод: <code>{1}</code>\nИмя: {2}\nДата создания: {3}\n"
     }

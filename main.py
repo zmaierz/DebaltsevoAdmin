@@ -137,7 +137,14 @@ def answer(message):
                 kernel.createAdminInvite(message.from_user.id, 1)
                 bot.send_message(message.chat.id, "Введине имя нового администратора", reply_markup=cancelMarkup)
             elif (message.text == settingsAdminMenuButtons["checkInvite"]):
-                print("Проверка приглашений")
+                inviteList = kernel.getInvitings()
+                outText = botMessages["inviteList"]
+                inviteListMarkup = types.InlineKeyboardMarkup()
+                j = 1
+                for i in inviteList:
+                    outText += f"{j}. {i[2]}"
+                    inviteListMarkup.add(types.InlineKeyboardButton(i[2], callback_data=f"o-i-{i[0]}"))
+                bot.send_message(message.chat.id, outText, reply_markup=inviteListMarkup, parse_mode="html")
             elif (message.text == settingsAdminMenuButtons["backToSettings"]):
                 bot.send_message(message.chat.id, "Настройки", reply_markup=settingsMenuMarkup)
     elif (message.text == mainMenuButtons["RegisterUser"]):
@@ -245,26 +252,54 @@ def process(call):
         elif (call.data[2] == "a"): # Admin
             if (call.data[5] == "-"):
                 adminID = call.data[4]
+                offset = 0
             else:
-                adminID = kernel.getIDWithOffset(call.data, 4)
-            for i in range(4, len(call.data)):
-                pass
-            if (call.data[6] == "0"): # Confim None
+                adminID, offset = kernel.getIDWithOffset(call.data, 4)
+                offset -= 1
+            if (call.data[6 + offset] == "0"): # Confim None
                 confimDeleteAdminMarkup = types.InlineKeyboardMarkup().add(types.InlineKeyboardButton("Да", callback_data=f"d-a-{adminID}-1-0"), types.InlineKeyboardButton("Нет", callback_data=f"d-a-{adminID}-2"))
                 bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Вы действительно хотите удалить администратора?", reply_markup=confimDeleteAdminMarkup)
-            elif (call.data[6] == "1"): # Confim Ok
+            elif (call.data[6 + offset] == "1"): # Confim Ok
                 kernel.deleteAdmin(adminID)
                 kernel.getActualAdmins()
                 bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Удалено", reply_markup=None)
                 bot.send_message(call.message.chat.id, "Настройки", reply_markup=settingsMenuMarkup)
-            elif (call.data[6] == "2"): # Confim No
+            elif (call.data[6 + offset] == "2"): # Confim No
                 bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Отменено", reply_markup=None)
                 bot.send_message(call.message.chat.id, "Настройки", reply_markup=settingsMenuMarkup)
+        elif (call.data[2] == "i"): # Invite
+            if (call.data[5] == "-"):
+                inviteID = call.data[4]
+                offset = 0
+            else:
+                inviteID, offset = kernel.getIDWithOffset(call.data, 4)
+                offset -= 1
+            if (call.data[6 + offset] == "0"): # Confim None
+                confimDeleteInviteMarkup = types.InlineKeyboardMarkup().add(types.InlineKeyboardButton("Да", callback_data=f"d-i-{inviteID}-1"), types.InlineKeyboardButton("Нет", callback_data=f"d-i-{inviteID}-2"))
+                bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Вы действительно хотите удалить приглашение?", reply_markup=confimDeleteInviteMarkup)
+            elif (call.data[6 + offset] == "1"): # Confim Ok
+                kernel.deleteAdminInvite(inviteID)
+                bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Удалено", reply_markup=None)
+            elif (call.data[6 + offset] == "2"): # Confim No
+                bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Отменено", reply_markup=None)
     elif (call.data[0] == "o"): # Open
         if (call.data[2] == "a"): # Admin
-            adminData = kernel.getAdminList(call.data[4])
+            if (len(call.data) == 4):
+                adminID = call.data[4]
+            else:
+                adminID, offset = kernel.getIDWithOffset(call.data, 4)
+            adminData = kernel.getAdminList(adminID)
             outText = botMessages["OpenAdmin"].format(adminData[0], adminData[1], adminData[2], adminData[3], adminData[4])
             editAdminMarkup = types.InlineKeyboardMarkup().add(types.InlineKeyboardButton("Изменить имя", callback_data=f"s-a-{adminData[0]}-0"), types.InlineKeyboardButton("Удалить", callback_data=f"d-a-{adminData[0]}-0"))
             bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text=outText, reply_markup=editAdminMarkup)
+        elif (call.data[2] == "i"): # Invite
+            if (len(call.data) == 4):
+                inviteID, offset = call.data[4]
+            else:
+                inviteID, offset = kernel.getIDWithOffset(call.data, 4)
+            invite = kernel.getInvitings(inviteID)
+            outText = botMessages["inviteListItemOpen"].format(invite[0], invite[1], invite[2], invite[3])
+            inviteDeleteMarkup = types.InlineKeyboardMarkup().add(types.InlineKeyboardButton("Удалить", callback_data=f"d-i-{inviteID}-0"))
+            bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text=outText, parse_mode="html", reply_markup=inviteDeleteMarkup)
 
 bot.infinity_polling()
