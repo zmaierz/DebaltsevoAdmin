@@ -10,6 +10,7 @@ class Kernel:
         self.MainMenuButtons = messages.getMainMenuButtons()
         self.settingsButtons = messages.getSettingsMenuButtons()
         self.settingsAdminButtons = messages.getSettingsAdminMenuButtons()
+        self.categoryMenuButtons = messages.getCategoryMenuButtons()
         self.Messages = messages.getMessages()
 
         self.kernelConfig = configparser.ConfigParser()
@@ -125,6 +126,21 @@ class Kernel:
             self.cancelAction(adminID)
         elif (status == 0): # Отмена. Удаление записи
             self.cancelAction(adminID)
+    def createCategory(self, adminID, status, data = ""):
+        status = int(status)
+        if (status == 1): # Начало создания категории
+            self.usersActions[adminID] = ["categoryCreate", "", "", "", 2]
+        elif (status == 2): # Ввод имени
+            self.usersActions[adminID][1] = data
+            self.usersActions[adminID][4] = 3
+        elif (status == 3): # Подтверждение. Создание категории
+            categoryName = self.usersActions[adminID][1]
+            categoryUrl = functions.translitText(categoryName)
+            categoryUrl = categoryUrl.replace(" ", "-")
+            self.createCategoryInDB(categoryName, categoryUrl)
+            self.cancelAction(adminID)
+        elif (status == 0): # Отмена. Удаление записи
+            self.cancelAction(adminID)
     def createAdminInvite(self, userID, status, data=""):
         status = int(status)
         if (status == 1): # Начало создания
@@ -168,6 +184,19 @@ class Kernel:
         systemCachePath = self.webPath + self.cachePath + "system/"
         functions.deleteFile(systemCachePath + "footer.html")
         functions.deleteFile(systemCachePath + "header.html")
+    def createCategoryInDB(self, categoryName, categoryUrl):
+        highNumber = self.getCategoryLastNumber()
+        self.webDatabase.executeQuery(f"INSERT INTO `categoryList` (`number`, `name`, `url`) VALUES ('{highNumber}', '{categoryName}', '{categoryUrl}')")
+        systemCachePath = self.webPath + self.cachePath + "system/"
+        functions.deleteFile(systemCachePath + "footer.html")
+        functions.deleteFile(systemCachePath + "header.html")
+        self.updateCategoryList()
+    def getCategoryLastNumber(self):
+        highNumber = 0
+        for i in self.categoryList:
+            if (i[0] > highNumber):
+                highNumber = i[0]
+        return highNumber
     def getToken(self):
         return self.botToken
     def getWebDBConfig(self):
@@ -180,6 +209,8 @@ class Kernel:
         return self.settingsButtons
     def getSettingsAdminMenuButtons(self):
         return self.settingsAdminButtons
+    def getCategoryMenuButtons(self):
+        return self.categoryMenuButtons
     def getMessages(self):
         return self.Messages
     def getIDWithOffset(self, call, startPlace):
@@ -283,5 +314,10 @@ class Kernel:
         elif (type == "settingsAdmin"):
             for i in self.settingsAdminButtons:
                 if (self.settingsAdminButtons[i] == data):
+                    return True
+            return False
+        elif (type == "category"):
+            for i in self.categoryMenuButtons:
+                if (self.categoryMenuButtons[i] == data):
                     return True
             return False

@@ -8,6 +8,7 @@ bot = telebot.TeleBot(kernel.getToken())
 mainMenuButtons = kernel.getMainMenuButtons()
 settingsMenuButtons = kernel.getSettingsMenuButtons()
 settingsAdminMenuButtons = kernel.getSettingsAdminMenuButtons()
+categoryMenuButtons = kernel.getCategoryMenuButtons()
 botMessages = kernel.getMessages()
 
 mainMenuMarkup = types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -85,17 +86,41 @@ def answer(message):
                         confimCreateAdminMarkup = types.InlineKeyboardMarkup().add(types.InlineKeyboardButton("Да", callback_data="c-a-1"), types.InlineKeyboardButton("Отмена", callback_data="c-a-2"))
                         outText = botMessages["confimCreateAdmin"].format(message.text)
                         bot.send_message(message.chat.id, outText, reply_markup=confimCreateAdminMarkup)
+            elif (usersActions[0] == "categoryCreate"):
+                if (usersActions[4] == 2): # Ввод имени
+                    if (len(message.text) > 100):
+                        bot.send_message(message.chat.id, "Слишком длинное имя!")
+                    else:
+                        kernel.createCategory(message.from_user.id, 2, message.text)
+                        confimCreateCategoryMarkup = types.InlineKeyboardMarkup().add(types.InlineKeyboardButton("Да", callback_data="c-c-1"), types.InlineKeyboardButton("Нет", callback_data="c-c-2"))
+                        outText = f"Вы действительно хотите создать категорию {message.text}?"
+                        bot.send_message(message.chat.id, outText, reply_markup=confimCreateCategoryMarkup)
         elif (message.text == mainMenuButtons["createNewPage"]):
             kernel.pageCreate(message.from_user.id, 1)
             bot.send_message(message.chat.id, botMessages["createPage_enterName"], reply_markup=cancelMarkup)
         elif (message.text == mainMenuButtons["Categories"]):
-            bot.send_message(message.chat.id, "Категории в разработке!")
+            categoryList = kernel.getCategoryList()
+            categoryMenuMarkup = types.ReplyKeyboardMarkup(resize_keyboard=True).add(types.KeyboardButton(categoryMenuButtons["createCategory"]))
+            categoryMenuMarkup.add(types.KeyboardButton(settingsMenuButtons["back"]))
+            categoryListMarkup = types.InlineKeyboardMarkup()
+            outText = "Список категорий:\n"
+            j = 1
+            for i in categoryList:
+                outText += f"{j}. {i[1]}\n"
+                categoryListMarkup.add(types.InlineKeyboardButton(i[1], callback_data=f"o-c-{i[0]}"))
+                j += 1
+            bot.send_message(message.chat.id, "Настройка категорий", reply_markup=categoryMenuMarkup)
+            bot.send_message(message.chat.id, outText, reply_markup=categoryListMarkup)
         elif (message.text == mainMenuButtons["News"]):
             bot.send_message(message.chat.id, "Новости в разработке!")
         elif (message.text == mainMenuButtons["Settings"]):
             bot.send_message(message.chat.id, botMessages["settingsText"], reply_markup=settingsMenuMarkup)
         elif (message.text == mainMenuButtons["Logs"]):
             bot.send_message(message.chat.id, "Логи в разработке!")
+        elif (kernel.checkButtonFromList("category", message.text)):
+            if (message.text == categoryMenuButtons["createCategory"]):
+                kernel.createCategory(message.from_user.id, 1)
+                bot.send_message(message.chat.id, "Введите название новой категории", reply_markup=cancelMarkup)
         elif (kernel.checkButtonFromList("settings", message.text)):
             if (message.text == settingsMenuButtons["cache"]):
                 cacheStatus = kernel.getCacheStatus()
@@ -144,8 +169,9 @@ def answer(message):
                 inviteListMarkup = types.InlineKeyboardMarkup()
                 j = 1
                 for i in inviteList:
-                    outText += f"{j}. {i[2]}"
+                    outText += f"{j}. {i[2]}\n"
                     inviteListMarkup.add(types.InlineKeyboardButton(i[2], callback_data=f"o-i-{i[0]}"))
+                    j += 1
                 bot.send_message(message.chat.id, outText, reply_markup=inviteListMarkup, parse_mode="html")
             elif (message.text == settingsAdminMenuButtons["backToSettings"]):
                 bot.send_message(message.chat.id, "Настройки", reply_markup=settingsMenuMarkup)
@@ -180,6 +206,15 @@ def process(call):
                     kernel.pageCreate(call.from_user.id, 5)
                     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text=botMessages["createPage_Ok"], reply_markup=None)
                     bot.send_message(call.message.chat.id, "Главное меню", reply_markup=mainMenuMarkup)
+        elif (call.data[2] == "c"): # Category
+            if (call.data[4] == "1"): # Confim Ok
+                kernel.createCategory(call.from_user.id, 3)
+                bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Категория создана!")
+                bot.send_message(call.message.chat.id, "Главное меню", reply_markup=mainMenuMarkup)
+            elif (call.data[4] == "2"): # Confim 
+                kernel.createCategory(call.from_user.id, 0)
+                bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Отменено", reply_markup=None)
+                bot.send_message(call.message.chat.id, "Главное меню", reply_markup=mainMenuMarkup)
         if (call.data[2] == "a"): # Admin
             if (call.data[4] == "1"): # Confirmed
                 kernel.createAdminInvite(call.from_user.id, 3)

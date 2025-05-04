@@ -27,6 +27,11 @@ def getSettingsAdminMenuButtons():
         "backToSettings" : "Назад в настройки"
     }
 
+def getCategoryMenuButtons():
+    return {
+        "createCategory" : "Создать новую категорию",
+    }
+
 def getMessages():
     return {
         "registerUserSuccess" : "{0}, приглашение активировано!\nИмя администратора: {1}",
@@ -51,5 +56,5 @@ def getMessages():
         "adminCreated" : "Создан администратор {0}\n\nСсылка-приглашение: <code>{1}</code>",
         "inviteList" : "Список неактивированных приглашений:\n",
         "inviteListItemOpen" : "ID: {0}\nКод: <code>{1}</code>\nИмя: {2}\nДата создания: {3}\n",
-        "checkSystemVersion" : "Версия бота: {0}\nВерсия сайта: {1}\nВерсия хоста: {2}"
+        "checkSystemVersion" : "Версия бота: {0}\nВерсия сайта: {1}\nВерсия хоста: {2}",
     }
