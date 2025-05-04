@@ -8,6 +8,8 @@ import engine.modules.functions as functions
 class Kernel:
     def __init__(self):
         self.MainMenuButtons = messages.getMainMenuButtons()
+        self.settingsButtons = messages.getSettingsMenuButtons()
+        self.settingsAdminButtons = messages.getSettingsAdminMenuButtons()
         self.Messages = messages.getMessages()
 
         self.kernelConfig = configparser.ConfigParser()
@@ -20,6 +22,7 @@ class Kernel:
         self.webPath = self.kernelConfig.get("BOT", "web-path")
         self.cachePath = self.kernelConfig.get("BOT", "cache-path")
         debug = self.kernelConfig.get("BOT", "debug")
+        self.hostVersion = self.kernelConfig.get("BOT", "hostname")
         if (debug == "true"):
             self.debug = True
         else:
@@ -57,12 +60,50 @@ class Kernel:
             database=self.botDBConfig["database"],
             port=self.botDBConfig["port"],
         )
+        self.systemData = functions.getSystemData()
+        self.getActualAdmins()
         self.usersActions = {}
-        self.adminList = self.botDatabase.getData("SELECT * FROM `Admins_BOT`")
-        self.actualAdmins = []
-        for admin in self.adminList:
-            self.actualAdmins.append(admin[1])
+        self.usersAuth = {}
         self.categoryList = self.webDatabase.getData("SELECT * FROM `categoryList`")
+
+    def getVersions(self):
+        return [self.systemData["version"]["botVersion"], self.systemData["version"]["siteVersion"], self.hostVersion]
+    def authUser(self, userID, status, data = ""):
+        status = int(status)
+        if (status == 1): # Начало авторизации
+            self.usersAuth[userID] = ""
+        elif (status == 2): # Ввод кода
+            self.usersAuth[userID] = data
+    
+    def checkAdminInvite(self, code):
+        admin = self.botDatabase.getData(f"SELECT * FROM `AdminInvitings_BOT` WHERE `Code` = \"{code}\";")
+        if (admin == []):
+            return False
+        else:
+            return admin[0][2]
+        
+    def delAuthUser(self, userID):
+        del self.usersAuth[userID]
+
+    def createAdmin(self, userID, inviteCode):
+        invite = self.botDatabase.getData(f"SELECT * FROM `AdminInvitings_BOT` WHERE `Code` = \"{inviteCode}\";")[0]
+        inviteID = invite[0]
+        inviteCreator = invite[4]
+        inviteAdminName = invite[2]
+        self.botDatabase.executeQuery(f"UPDATE `AdminInvitings_BOT` SET `Activated` = '1' WHERE `AdminInvitings_BOT`.`ID` = {inviteID};")
+        self.botDatabase.executeQuery(f"INSERT INTO `Admins_BOT` (`ID`, `TID`, `CreationDate`, `Creator`, `Name`) VALUES (NULL, '{userID}', '{functions.getActualTime()}', '{inviteCreator}', '{inviteAdminName}')")
+        self.botDatabase.executeQuery(f"UPDATE `AdminInvitings_BOT` SET `ActivatedBy` = '{userID}' WHERE `AdminInvitings_BOT`.`ID` = {inviteID};")
+        self.getActualAdmins()
+
+    def getInvitings(self, id = None):
+        if (id == None):
+            inviteList = self.botDatabase.getData("SELECT * FROM `AdminInvitings_BOT` WHERE `Activated` = 0;")
+        else:
+            inviteList = self.botDatabase.getData(f"SELECT * FROM `AdminInvitings_BOT` WHERE `ID` = {id};")[0]
+        return inviteList
+
+    def deleteAdminInvite(self, id):
+        self.botDatabase.executeQuery(f"DELETE FROM AdminInvitings_BOT WHERE `AdminInvitings_BOT`.`ID` = {id}")
 
     def pageCreate(self, adminID, status, data = ""):
         status = int(status)
@@ -84,8 +125,37 @@ class Kernel:
             self.cancelAction(adminID)
         elif (status == 0): # Отмена. Удаление записи
             self.cancelAction(adminID)
+    def createAdminInvite(self, userID, status, data=""):
+        status = int(status)
+        if (status == 1): # Начало создания
+            self.usersActions[userID] = ["createAdminInvite", "", "", "", 2]
+        elif (status == 2): # Ввод имени
+            self.usersActions[userID][1] = data
+            self.usersActions[userID][4] = 3
+        elif (status == 3): # Подтверждение
+            inviteCode = functions.generateAdminInviteCode()
+            self.botDatabase.executeQuery(f"INSERT INTO `AdminInvitings_BOT` (`ID`, `Code`, `Name`, `CreationDate`, `Creator`, `Activated`, `ActivatedBy`) VALUES (NULL, '{inviteCode}', '{self.usersActions[userID][1]}', '{functions.getActualTime()}', '{userID}', '0', NULL)")
+            self.usersActions[userID][2] = inviteCode
+        elif (status == 0): # Отмена. Удаление записи
+            self.cancelAction(userID)
+    def changeAdminName(self, userID, status, data=""):
+        status = int(status)
+        if (status == 1): # Начало изменения имени. data - AdminID
+            self.usersActions[userID] = ["changeAdminName", data, "", "", 2]
+        elif (status == 2): # Ввод нового имени
+            self.usersActions[userID][2] = data
+            self.usersActions[userID][4] = 3
+        elif (status == 3): # Подтверждение. Изменение имени
+            self.botDatabase.executeQuery(f"UPDATE `Admins_BOT` SET `Name` = '{self.usersActions[userID][2]}' WHERE `Admins_BOT`.`ID` = {self.usersActions[userID][1]};")
+            self.cancelAction(userID)
+        elif (status == 0): # Отмена. Удаление записи
+            self.cancelAction(userID)
     def isUserActive(self, id):
         if (id in self.usersActions):
+            return True
+        return False
+    def isUserAuth(self, id):
+        if (id in self.usersAuth):
             return True
         return False
     def createPageToWeb(self, pageName, pageAlias, pageCategory, pageHide):
@@ -106,8 +176,14 @@ class Kernel:
         return self.botDBConfig
     def getMainMenuButtons(self):
         return self.MainMenuButtons
+    def getSettingsMenuButtons(self):
+        return self.settingsButtons
+    def getSettingsAdminMenuButtons(self):
+        return self.settingsAdminButtons
     def getMessages(self):
         return self.Messages
+    def getIDWithOffset(self, call, startPlace):
+        return functions.getIDWithOffset(call, startPlace)
     def getUsersActions(self, id = None):
         if (id == None):
             return self.usersActions
@@ -117,6 +193,18 @@ class Kernel:
         return self.usersActions[id]
     def getCategoryList(self):
         return self.categoryList
+    def getAdminList(self, adminID = None):
+        adminList = self.botDatabase.getData("SELECT * FROM `Admins_BOT`")
+        if (adminID == None):
+            return adminList
+        for i in adminList:
+            if (str(i[0]) == adminID):
+                return i
+        return None
+    def deleteAdmin(self, adminID):
+        adminTID = self.getAdminList(adminID)[1]
+        self.botDatabase.executeQuery(f"DELETE FROM AdminInvitings_BOT WHERE `AdminInvitings_BOT`.`ActivatedBy` = {adminTID}")
+        self.botDatabase.executeQuery(f"DELETE FROM Admins_BOT WHERE `Admins_BOT`.`ID` = {adminID}")
     def getCategoryFromID(self, categoryID):
         categoryID = int(categoryID)
         for i in self.categoryList:
@@ -126,15 +214,72 @@ class Kernel:
     def getStrFromBool(self, temp):
         temp = int(temp)
         if (temp == 1):
-            return "Да"
+            return "🟢 Да"
         else:
-            return "Нет"
+            return "🟥 Нет"
     def cancelAction(self, id):
         del self.usersActions[id]
     def isDebug(self):
         return self.debug
+    def changeCacheStatus(self, newStatus):
+        if (newStatus):
+            newStatus = "true"
+            oldStatus = "false"
+        else:
+            newStatus = "false"
+            oldStatus = "true"
+        webConfig = functions.getFileContent(self.webPath + "engine/config/kernelConfig.php")
+        cacheStatus = webConfig.partition("\"useCache\" =>")
+        newConfig = cacheStatus[0] + cacheStatus[1]
+        endConfig = cacheStatus[2].partition(oldStatus)
+        newConfig += newStatus + endConfig[2]
+        functions.writeFileContent(self.webPath + "engine/config/kernelConfig.php", newConfig)
+    def getCacheStatus(self):
+        webConfig = functions.getFileContent(self.webPath + "engine/config/kernelConfig.php")
+        cacheStatus = webConfig.partition("\"useCache\" =>")[2].strip()[0]
+        if (cacheStatus == "t"):
+            return True
+        return False
+    def getDebugStatus(self):
+        webConfig = functions.getFileContent(self.webPath + "engine/config/kernelConfig.php")
+        cacheStatus = webConfig.partition("\"debug\" =>")[2].strip()[0]
+        if (cacheStatus == "t"):
+            return True
+        return False
+    def changeDebugStatus(self, newStatus):
+        if (newStatus):
+            newStatus = "true"
+            oldStatus = "false"
+        else:
+            newStatus = "false"
+            oldStatus = "true"
+        webConfig = functions.getFileContent(self.webPath + "engine/config/kernelConfig.php")
+        cacheStatus = webConfig.partition("\"debug\" =>")
+        newConfig = cacheStatus[0] + cacheStatus[1]
+        endConfig = cacheStatus[2].partition(oldStatus)
+        newConfig += newStatus + endConfig[2]
+        functions.writeFileContent(self.webPath + "engine/config/kernelConfig.php", newConfig)
+    def deleteAllCache(self):
+        functions.deleteDirectoryContent(self.webPath + self.cachePath + "system/")
+        functions.deleteDirectoryContent(self.webPath + self.cachePath + "pages/")
     def isAdmin(self, id):
         if (str(id) in self.actualAdmins):
             return True
         else:
+            return False
+    def getActualAdmins(self):
+        self.adminList = self.botDatabase.getData("SELECT * FROM `Admins_BOT`")
+        self.actualAdmins = []
+        for admin in self.adminList:
+            self.actualAdmins.append(admin[1])
+    def checkButtonFromList(self, type, data):
+        if (type == "settings"):
+            for i in self.settingsButtons:
+                if (self.settingsButtons[i] == data):
+                    return True
+            return False
+        elif (type == "settingsAdmin"):
+            for i in self.settingsAdminButtons:
+                if (self.settingsAdminButtons[i] == data):
+                    return True
             return False
