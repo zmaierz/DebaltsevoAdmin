@@ -330,6 +330,15 @@ class Kernel:
             return True
         else:
             return False
+    def isPageHide(self, pageID):
+        pageData = self.webDatabase.getData(f"SELECT * FROM `pageList` WHERE `ID` = \"{pageID}\";")[0]
+        isPageHide = pageData[6]
+        if (isPageHide == "0" or isPageHide == 0):
+            return True
+        return False
+    def hidePage(self, pageID, action):
+        query = f"UPDATE `pageList` SET `isHide` = '{action}' WHERE `pageList`.`ID` = \"{pageID}\";"
+        self.webDatabase.executeQuery(query)
     def getActualAdmins(self):
         self.adminList = self.botDatabase.getData("SELECT * FROM `Admins_BOT`")
         self.actualAdmins = []

@@ -276,6 +276,34 @@ def process(call):
                 kernel.changeAdminName(call.from_user.id, 0)
                 bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Отменено", reply_markup=None)
                 bot.send_message(call.message.chat.id, "Настройки", reply_markup=settingsMenuMarkup)
+        elif (call.data[2] == "h"): # Page hide/open
+            if (call.data[5] == "-"):
+                pageID = call.data[4]
+                offset = 0
+            else:
+                pageID, offset = kernel.getIDWithOffset(call.data, 4)
+                offset -= 1
+            status = int(call.data[6 + offset])
+            if (status == 0): # Confim None
+                confimChangeHidePageMarkup = types.InlineKeyboardMarkup().add(types.InlineKeyboardButton("Да", callback_data=f"s-h-{pageID}-1"), types.InlineKeyboardButton("Нет", callback_data=f"s-h-{pageID}-2"))
+                if (kernel.isPageHide(pageID)):
+                    action = "скрыть"
+                else:
+                    action = "открыть"
+                bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text=f"Вы действительно хотите {action} страницу?", reply_markup=confimChangeHidePageMarkup)
+            elif (status == 1): # Confim Ok
+                if (kernel.isPageHide(pageID)):
+                    action = 1
+                    actionText = "скрыта"
+                else:
+                    action = 0
+                    actionText = "открыта"
+                kernel.hidePage(pageID, action)
+                bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text=f"Страница {actionText}", reply_markup=None)
+                bot.send_message(call.message.chat.id, "Главная", reply_markup=mainMenuMarkup)
+            elif (status == 2): # Confim No
+                bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Отменено", reply_markup=None)
+                bot.send_message(call.message.chat.id, "Главная", reply_markup=mainMenuMarkup)
     elif (call.data[0] == "d"): # Delete
         if (call.data[2] == "s"): # Cache
             if (call.data[4] == "0"): # Confirm None
@@ -437,8 +465,12 @@ def process(call):
             )
             if (pageData[5] != None):
                 pageOpenMarkup.add(types.InlineKeyboardButton("Удалить кэш страницы", callback_data=f"d-r-{pageID}-0"))
+            if (kernel.isPageHide(pageID)):
+                pageHideAction = "Скрыть"
+            else:
+                pageHideAction = "Открыть"
             pageOpenMarkup.add(
-                types.InlineKeyboardButton("Скрыть страницу", callback_data=f"s-h-{pageID}-0"),
+                types.InlineKeyboardButton(f"{pageHideAction} страницу", callback_data=f"s-h-{pageID}-0"),
                 types.InlineKeyboardButton("Удалить страницу", callback_data=f"d-p-{pageID}-0")
             )
             bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text=outText, reply_markup=pageOpenMarkup)
