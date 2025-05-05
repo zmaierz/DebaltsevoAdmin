@@ -138,7 +138,13 @@ def answer(message):
         elif (message.text == mainMenuButtons["Settings"]):
             bot.send_message(message.chat.id, botMessages["settingsText"], reply_markup=settingsMenuMarkup)
         elif (message.text == mainMenuButtons["Logs"]):
-            bot.send_message(message.chat.id, "Логи в разработке!")
+            openLogMarkup = types.InlineKeyboardMarkup().add(
+                types.InlineKeyboardButton("Лог бота", callback_data="o-l-1"),
+                types.InlineKeyboardButton("Лог действий администраторов", callback_data="o-l-2"),
+                types.InlineKeyboardButton("Лог сайта", callback_data="o-l-3"),
+                types.InlineKeyboardButton("Лог инцидентов сайта", callback_data="o-l-4")
+            )
+            bot.send_message(message.chat.id, "Выберите, что вы хотите увидеть", reply_markup=openLogMarkup)
         elif (kernel.checkButtonFromList("category", message.text)):
             if (message.text == categoryMenuButtons["createCategory"]):
                 kernel.createCategory(message.from_user.id, 1)
@@ -379,7 +385,7 @@ def process(call):
                 confimDeleteCacheMarkup = types.InlineKeyboardMarkup().add(types.InlineKeyboardButton("Да", callback_data="d-s-1"), types.InlineKeyboardButton("Нет", callback_data="d-s-2"))
                 bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Вы действительно хотите очистить весь кэш?", reply_markup=confimDeleteCacheMarkup)
             elif (call.data[4] == "1"): # Confim Ok
-                kernel.deleteAllCache()
+                kernel.deleteAllCache(call.from_user.id)
                 bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Удалено", reply_markup=None)
             elif (call.data[4] == "2"): # Confim No
                 bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Отменено", reply_markup=None)
@@ -394,7 +400,7 @@ def process(call):
                 confimDeleteAdminMarkup = types.InlineKeyboardMarkup().add(types.InlineKeyboardButton("Да", callback_data=f"d-a-{adminID}-1-0"), types.InlineKeyboardButton("Нет", callback_data=f"d-a-{adminID}-2"))
                 bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Вы действительно хотите удалить администратора?", reply_markup=confimDeleteAdminMarkup)
             elif (call.data[6 + offset] == "1"): # Confim Ok
-                kernel.deleteAdmin(adminID)
+                kernel.deleteAdmin(adminID, call.from_user.id)
                 kernel.getActualAdmins()
                 bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Удалено", reply_markup=None)
                 bot.send_message(call.message.chat.id, "Настройки", reply_markup=settingsMenuMarkup)
@@ -412,7 +418,7 @@ def process(call):
                 confimDeleteInviteMarkup = types.InlineKeyboardMarkup().add(types.InlineKeyboardButton("Да", callback_data=f"d-i-{inviteID}-1"), types.InlineKeyboardButton("Нет", callback_data=f"d-i-{inviteID}-2"))
                 bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Вы действительно хотите удалить приглашение?", reply_markup=confimDeleteInviteMarkup)
             elif (call.data[6 + offset] == "1"): # Confim Ok
-                kernel.deleteAdminInvite(inviteID)
+                kernel.deleteAdminInvite(inviteID, call.from_user.id)
                 bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Удалено", reply_markup=None)
             elif (call.data[6 + offset] == "2"): # Confim No
                 bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Отменено", reply_markup=None)
@@ -434,7 +440,7 @@ def process(call):
                 confimDeleteCategoryMarkup = types.InlineKeyboardMarkup().add(types.InlineKeyboardButton("Да", callback_data=f"d-c-{categoryID}-1"), types.InlineKeyboardButton("Нет", callback_data=f"d-c-{categoryID}-2"))
                 bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Вы действительно хотите удалить категорию?", reply_markup=confimDeleteCategoryMarkup)
             elif (deleteStatus == 1): # Confim Ok
-                kernel.deleteCategoryFromDB(categoryName)
+                kernel.deleteCategoryFromDB(categoryName, call.from_user.id)
                 bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Удалено", reply_markup=None)
                 bot.send_message(call.message.chat.id, "Главное меню", reply_markup=mainMenuMarkup)
             elif (deleteStatus == 2): # Confim No
@@ -452,7 +458,7 @@ def process(call):
                 confimDeletePageCache = types.InlineKeyboardMarkup().add(types.InlineKeyboardButton("Да", callback_data=f"d-r-{pageID}-1"), types.InlineKeyboardButton("Нет", callback_data=f"d-r-{pageID}-2"))
                 bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Вы действительно хотите очистить кэш страницы?", reply_markup=confimDeletePageCache)
             elif (deleteStatus == 1): # Confim Ok
-                kernel.deletePageCache(pageID)
+                kernel.deletePageCache(pageID, call.from_user, id)
                 bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Кэш страницы удален", reply_markup=None)
                 bot.send_message(call.message.chat.id, "Главное меню", reply_markup=mainMenuMarkup)
             elif (deleteStatus == 2): # Confim No
@@ -471,7 +477,7 @@ def process(call):
                 confimPageDeleteMarkup = types.InlineKeyboardMarkup().add(types.InlineKeyboardButton("Да", callback_data=f"d-p-{pageID}-1"), types.InlineKeyboardButton("Нет", callback_data=f"d-p-{pageID}-2"))
                 bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Вы действительно хотите удалить страницу?", reply_markup=confimPageDeleteMarkup)
             elif (deleteStatus == 1): # Confim Ok
-                kernel.deletePage(pageID)
+                kernel.deletePage(pageID, call.from_user.id)
                 bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Страница удалена", reply_markup=None)
                 bot.send_message(call.message.chat.id, "Главное меню", reply_markup=mainMenuMarkup)
             elif (deleteStatus == 2): # Confim No
@@ -537,7 +543,7 @@ def process(call):
                 pageListMarkup.add(types.InlineKeyboardButton(i[1], callback_data=f"o-p-{i[0]}"))
                 j += 1
             bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text=outText, reply_markup=pageListMarkup)
-        elif (call.data[2] == "p"):
+        elif (call.data[2] == "p"): # Page
             if (len(call.data) == 4):
                 pageID = call.data[4]
                 offset = 0
@@ -562,5 +568,30 @@ def process(call):
                 types.InlineKeyboardButton("Удалить страницу", callback_data=f"d-p-{pageID}-0")
             )
             bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text=outText, reply_markup=pageOpenMarkup)
+        elif (call.data[2] == "l"):
+            if (call.data[4] == "1"): # Log bot
+                data = kernel.getLog("bot")
+                outData = "Лог бота:\n"
+                j = 1
+                for i in data:
+                    outData += f"{j}.\nID: {i[0]}\nSource: {i[1]}\nData: {i[2]}\nДата: {i[3]}"
+                    j += 1
+            elif (call.data[4] == "2"): # Log action
+                data = kernel.getLog("action")
+                outData = "Лог действий администраторов:\n"
+                j = 1
+                for i in data:
+                    outData += f"{j}.\nID: {i[0]}\nAdminID: {i[1]}\nActionType: {i[2]}\nData:{i[3]}\nДата: {i[4]}\n\n"
+                    j += 1
+            elif (call.data[4] == "3"): # Log site
+                outData = "В разработке."
+            elif (call.data[4] == "4"): # Log incident
+                data = kernel.getLog("incident")
+                outData = "Лог инцидентов:\n"
+                j = 1
+                for i in data:
+                    outData += f"{j}.\nID: {i[0]}\nТип инцидента: {i[1]}\nНазвание: {i[2]}\nОписание: {i[3]}\nSubdata: {i[4]}\nData: {i[5]}, Дата: {i[6]}\n\n"
+                    j += 1
+            bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text=outData)
             
 bot.infinity_polling()

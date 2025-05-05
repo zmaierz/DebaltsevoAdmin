@@ -315,6 +315,17 @@ class Kernel:
             return "🟥 Нет"
         else:
             return "🟢 Да"
+    def getLog(self, type):
+        data = None
+        if (type == "bot"):
+            data = self.botDatabase.getData("SELECT * FROM `log_BOT`")
+        elif (type == "action"):
+            data = self.botDatabase.getData("SELECT * FROM `logAction_BOY`")
+        elif (type == "site"): # In dev.
+            pass
+        elif (type == "incident"):
+            data = self.webDatabase.getData("SELECT * FROM `immunityIncidents`")
+        return data
     def cancelAction(self, id):
         del self.usersActions[id]
     def isDebug(self):
