@@ -91,6 +91,7 @@ class Kernel:
         inviteID = invite[0]
         inviteCreator = invite[4]
         inviteAdminName = invite[2]
+        self.botDatabase.executeQuery(functions.generateActionLogQuery(userID, "useAdminInvite"))
         self.botDatabase.executeQuery(f"UPDATE `AdminInvitings_BOT` SET `Activated` = '1' WHERE `AdminInvitings_BOT`.`ID` = {inviteID};")
         self.botDatabase.executeQuery(f"INSERT INTO `Admins_BOT` (`ID`, `TID`, `CreationDate`, `Creator`, `Name`) VALUES (NULL, '{userID}', '{functions.getActualTime()}', '{inviteCreator}', '{inviteAdminName}')")
         self.botDatabase.executeQuery(f"UPDATE `AdminInvitings_BOT` SET `ActivatedBy` = '{userID}' WHERE `AdminInvitings_BOT`.`ID` = {inviteID};")
@@ -103,7 +104,8 @@ class Kernel:
             inviteList = self.botDatabase.getData(f"SELECT * FROM `AdminInvitings_BOT` WHERE `ID` = {id};")[0]
         return inviteList
 
-    def deleteAdminInvite(self, id):
+    def deleteAdminInvite(self, id, adminID):
+        self.botDatabase.executeQuery(functions.generateActionLogQuery(adminID, "deleteAdminInvite", id))
         self.botDatabase.executeQuery(f"DELETE FROM AdminInvitings_BOT WHERE `AdminInvitings_BOT`.`ID` = {id}")
 
     def pageCreate(self, adminID, status, data = ""):
@@ -122,7 +124,7 @@ class Kernel:
         elif (status == 5): # Подтверждение. Создание страницы
             alias = functions.translitText(self.usersActions[adminID][1])
             alias = alias.replace(" ", "_")
-            self.createPageToWeb(self.usersActions[adminID][1], alias, self.getCategoryFromID(self.usersActions[adminID][2]), self.usersActions[adminID][3])
+            self.createPageToWeb(self.usersActions[adminID][1], alias, self.getCategoryFromID(self.usersActions[adminID][2]), self.usersActions[adminID][3], adminID)
             self.cancelAction(adminID)
         elif (status == 0): # Отмена. Удаление записи
             self.cancelAction(adminID)
@@ -141,7 +143,8 @@ class Kernel:
             self.usersActions[adminID][4] = 5
         elif (status == 5): # Подтверждение
             pageTable = self.getPageData(self.usersActions[adminID][5])[0][4]
-            self.webDatabase.executeQuery(f"INSERT INTO `Testovaja_stranitsa_Page` (`ID`, `type`, `subdata`, `data`) VALUES (NULL, '{self.usersActions[adminID][1]}', '{self.usersActions[adminID][2]}', '{self.usersActions[adminID][3]}')")
+            self.botDatabase.executeQuery(functions.generateActionLogQuery(adminID, "createBlock", f"PageTable: {pageTable}, blockType: {self.usersActions[adminID][1]}, subdata: {self.usersActions[adminID][2]}, data: {self.usersActions[adminID][3]}"))
+            self.webDatabase.executeQuery(f"INSERT INTO `{pageTable}` (`ID`, `type`, `subdata`, `data`) VALUES (NULL, '{self.usersActions[adminID][1]}', '{self.usersActions[adminID][2]}', '{self.usersActions[adminID][3]}')")
             self.deletePageCache(self.usersActions[adminID][5])
         elif (status == 6): # Отмена
             self.cancelAction(adminID)
@@ -165,7 +168,7 @@ class Kernel:
             categoryName = self.usersActions[adminID][1]
             categoryUrl = functions.translitText(categoryName)
             categoryUrl = categoryUrl.replace(" ", "-")
-            self.createCategoryInDB(categoryName, categoryUrl)
+            self.createCategoryInDB(categoryName, categoryUrl, adminID)
             self.cancelAction(adminID)
         elif (status == 0): # Отмена. Удаление записи
             self.cancelAction(adminID)
@@ -178,6 +181,7 @@ class Kernel:
             self.usersActions[userID][4] = 3
         elif (status == 3): # Подтверждение
             inviteCode = functions.generateAdminInviteCode()
+            self.botDatabase.executeQuery(functions.generateActionLogQuery(userID, "createAdminInvite", inviteCode))
             self.botDatabase.executeQuery(f"INSERT INTO `AdminInvitings_BOT` (`ID`, `Code`, `Name`, `CreationDate`, `Creator`, `Activated`, `ActivatedBy`) VALUES (NULL, '{inviteCode}', '{self.usersActions[userID][1]}', '{functions.getActualTime()}', '{userID}', '0', NULL)")
             self.usersActions[userID][2] = inviteCode
         elif (status == 0): # Отмена. Удаление записи
@@ -190,6 +194,7 @@ class Kernel:
             self.usersActions[userID][2] = data
             self.usersActions[userID][4] = 3
         elif (status == 3): # Подтверждение. Изменение имени
+            self.botDatabase.executeQuery(functions.generateActionLogQuery(userID, "changeAdminName", f"AdminID: {self.usersActions[userID][1]}, New name: {self.usersActions[userID][2]}"))
             self.botDatabase.executeQuery(f"UPDATE `Admins_BOT` SET `Name` = '{self.usersActions[userID][2]}' WHERE `Admins_BOT`.`ID` = {self.usersActions[userID][1]};")
             self.cancelAction(userID)
         elif (status == 0): # Отмена. Удаление записи
@@ -202,10 +207,11 @@ class Kernel:
         if (id in self.usersAuth):
             return True
         return False
-    def createPageToWeb(self, pageName, pageAlias, pageCategory, pageHide):
+    def createPageToWeb(self, pageName, pageAlias, pageCategory, pageHide, adminID):
         addPageToListQuery = f"INSERT INTO `pageList` (`ID`, `name`, `alias`, `category`, `tableName`, `cacheName`, `isHide`) VALUES (NULL, '{pageName}', '{pageAlias}', '{pageCategory}', '{pageAlias}', NULL, '{pageHide}')"
         createPageTableQuery = f"CREATE TABLE `debaltsevo-web`.`{pageAlias}_Page` (`ID` INT NOT NULL AUTO_INCREMENT , `type` VARCHAR(32) NOT NULL , `subdata` VARCHAR(128) NOT NULL , `data` TEXT NOT NULL , PRIMARY KEY (`ID`)) ENGINE = InnoDB;"
         createPageConnectionQuery = f"ALTER TABLE `{pageAlias}_Page` ADD FOREIGN KEY (`type`) REFERENCES `typeList`(`Name`) ON DELETE RESTRICT ON UPDATE RESTRICT;"
+        self.botDatabase.executeQuery(functions.generateActionLogQuery(adminID, "createPage", f"PageName: {pageName}, Category: {pageCategory}"))
         self.webDatabase.executeQuery(addPageToListQuery)
         self.webDatabase.executeQuery(createPageTableQuery)
         self.webDatabase.executeQuery(createPageConnectionQuery)
@@ -221,15 +227,17 @@ class Kernel:
             pageTable = pageData[4]
             pageContent = self.webDatabase.getData(f"SELECT * FROM `{pageTable}_Page`")
             return pageData, pageContent
-    def createCategoryInDB(self, categoryName, categoryUrl):
+    def createCategoryInDB(self, categoryName, categoryUrl, adminID):
         highNumber = int(self.getCategoryLastNumber()) + 1
+        self.botDatabase.executeQuery(functions.generateActionLogQuery(adminID, "CreateCategory", categoryName))
         self.webDatabase.executeQuery(f"INSERT INTO `categoryList` (`number`, `name`, `url`) VALUES ('{highNumber}', '{categoryName}', '{categoryUrl}')")
         systemCachePath = self.webPath + self.cachePath + "system/"
         functions.deleteFile(systemCachePath + "footer.html")
         functions.deleteFile(systemCachePath + "header.html")
         self.updateCategoryList()
-    def deleteCategoryFromDB(self, categoryName):
+    def deleteCategoryFromDB(self, categoryName, adminID):
         pageCategoryList = self.getCategoryPageList(categoryName)
+        self.botDatabase.executeQuery(functions.generateActionLogQuery(adminID, "deleteCategory", categoryName))
         for i in pageCategoryList:
             self.webDatabase.executeQuery(f"DROP TABLE `{i[4]}`")
         self.webDatabase.executeQuery(f"DELETE FROM pageList WHERE `pageList`.`category` = \"{categoryName}\";")
@@ -238,9 +246,10 @@ class Kernel:
         functions.deleteFile(systemCachePath + "footer.html")
         functions.deleteFile(systemCachePath + "header.html")
         self.updateCategoryList()
-    def deletePage(self, pageID):
+    def deletePage(self, pageID, adminID):
         pageData = self.webDatabase.getData(f"SELECT * FROM `pageList` WHERE `ID` = \"{pageID}\";")[0]
         pageTable = pageData[4]
+        self.botDatabase.executeQuery(functions.generateActionLogQuery(adminID, "deletePage", pageID))
         self.webDatabase.executeQuery(f"DELETE FROM `pageList` WHERE `pageList`.`ID` = {pageID}")
         self.webDatabase.executeQuery(f"DROP TABLE `{pageTable}_Page`")
     def getCategoryPageList(self, categoryName):
@@ -288,8 +297,9 @@ class Kernel:
             if (str(i[0]) == adminID):
                 return i
         return None
-    def deleteAdmin(self, adminID):
+    def deleteAdmin(self, adminID, creatorID):
         adminTID = self.getAdminList(adminID)[1]
+        self.botDatabase.executeQuery(functions.generateActionLogQuery(creatorID, "DeleteAdmin", "adminID"))
         self.botDatabase.executeQuery(f"DELETE FROM AdminInvitings_BOT WHERE `AdminInvitings_BOT`.`ActivatedBy` = {adminTID}")
         self.botDatabase.executeQuery(f"DELETE FROM Admins_BOT WHERE `Admins_BOT`.`ID` = {adminID}")
     def getCategoryFromID(self, categoryID):
@@ -347,14 +357,16 @@ class Kernel:
         endConfig = cacheStatus[2].partition(oldStatus)
         newConfig += newStatus + endConfig[2]
         functions.writeFileContent(self.webPath + "engine/config/kernelConfig.php", newConfig)
-    def deletePageCache(self, pageID):
+    def deletePageCache(self, pageID, adminID):
         pageData = self.webDatabase.getData(f"SELECT * FROM `pageList` WHERE `ID` = \"{pageID}\";")[0]
         pageCacheName = pageData[5]
         if (pageCacheName != None):
             systemCachePath = self.webPath + self.cachePath + "pages/" + pageCacheName
             functions.deleteFile(systemCachePath)
+            self.botDatabase.executeQuery(functions.generateActionLogQuery(adminID, "deletePageCache", pageID))
             self.webDatabase.executeQuery(f"UPDATE `pageList` SET `cacheName` = NULL WHERE `pageList`.`ID` = \"{pageID}\";")
-    def deleteAllCache(self):
+    def deleteAllCache(self, adminID):
+        self.botDatabase.executeQuery(functions.generateActionLogQuery(adminID, "deleteAllCache"))
         functions.deleteDirectoryContent(self.webPath + self.cachePath + "system/")
         functions.deleteDirectoryContent(self.webPath + self.cachePath + "pages/")
         self.webDatabase.executeQuery("UPDATE `pageList` SET `cacheName` = NULL WHERE `pageList`.`cacheName` IS NOT NULL;")

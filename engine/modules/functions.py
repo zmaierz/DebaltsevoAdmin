@@ -17,6 +17,10 @@ def generateAdminInviteCode():
     code = ''.join(text)
     return code
 
+def generateActionLogQuery(adminID, action, data = ""):
+    query = f"INSERT INTO `logAction_BOY` (`ID`, `adminID`, `action`, `data`, `date`) VALUES (NULL, '{adminID}', '{action}', '{data}', '{getActualTime()}')"
+    return query
+
 def getIDWithOffset(call, startPlace):
     idOffset = 0
     for i in range(startPlace, len(call)):
