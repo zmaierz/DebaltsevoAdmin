@@ -144,8 +144,8 @@ class Kernel:
         elif (status == 5): # Подтверждение
             pageTable = self.getPageData(self.usersActions[adminID][5])[0][4]
             self.botDatabase.executeQuery(functions.generateActionLogQuery(adminID, "createBlock", f"PageTable: {pageTable}, blockType: {self.usersActions[adminID][1]}, subdata: {self.usersActions[adminID][2]}, data: {self.usersActions[adminID][3]}"))
-            self.webDatabase.executeQuery(f"INSERT INTO `{pageTable}` (`ID`, `type`, `subdata`, `data`) VALUES (NULL, '{self.usersActions[adminID][1]}', '{self.usersActions[adminID][2]}', '{self.usersActions[adminID][3]}')")
-            self.deletePageCache(self.usersActions[adminID][5])
+            self.webDatabase.executeQuery(f"INSERT INTO `{pageTable}_Page` (`ID`, `type`, `subdata`, `data`) VALUES (NULL, '{self.usersActions[adminID][1]}', '{self.usersActions[adminID][2]}', '{self.usersActions[adminID][3]}')")
+            self.deletePageCache(self.usersActions[adminID][5], adminID)
         elif (status == 6): # Отмена
             self.cancelAction(adminID)
     def getBlockTypeList(self):
@@ -289,6 +289,11 @@ class Kernel:
         return self.usersActions[id]
     def getCategoryList(self):
         return self.categoryList
+    def generateString(self, leng = 20):
+        out = functions.generateAdminInviteCode(leng)
+        return out
+    def getWebPath(self):
+        return self.webPath
     def getAdminList(self, adminID = None):
         adminList = self.botDatabase.getData("SELECT * FROM `Admins_BOT`")
         if (adminID == None):

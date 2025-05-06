@@ -39,6 +39,32 @@ def welcome(message):
     else:
         bot.send_message(message.chat.id, botMessages["welcomeUnRegister"].format(message.from_user.first_name), reply_markup=unregisterMarkup)
 
+@bot.message_handler(content_types=['photo'])
+def photo(message):
+    if (kernel.isUserActive(message.from_user.id)):
+        usersActions = kernel.getUsersActions(message.from_user.id)
+        if (usersActions[0] == "blockCreate"):
+            if ((usersActions[4] == 4) and (usersActions[1] == "photo")): # Ввод data            
+                fileID = message.photo[-1].file_id   
+                file_info = bot.get_file(fileID)
+                downloaded_file = bot.download_file(file_info.file_path)
+                imageName = kernel.generateString(10)  + ".jpg"
+                webPath = kernel.getWebPath()
+                saveName = webPath + "engine/templates/media/images/" + imageName
+                with open(saveName, 'wb') as new_file:
+                    new_file.write(downloaded_file)
+                kernel.blockCreate(message.from_user.id, 4, imageName)
+                userAction = kernel.getUsersActions(message.from_user.id)
+                outText = botMessages["checkNewBlock"].format(userAction[1], userAction[2], userAction[3])
+                confimBlockCreateMarkup = types.InlineKeyboardMarkup().add(types.InlineKeyboardButton("Да", callback_data=f"c-d-1-{userAction[5]}"), types.InlineKeyboardButton("Отмена", callback_data=f"c-d-2-{userAction[5]}"))
+                bot.send_message(message.chat.id, outText, reply_markup=confimBlockCreateMarkup)
+            else:
+                bot.send_message(message.chat.id, "Неверный тип данных!")
+        else:
+            bot.send_message(message.chat.id, "Неверный тип данных!")
+    else:
+        bot.send_message(message.chat.id, "Неверный тип данных!")
+
 @bot.message_handler(content_types='text')
 def answer(message):
     if (kernel.isUserAuth(message.from_user.id)):
