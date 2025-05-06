@@ -2,6 +2,8 @@ import telebot
 from telebot import types
 import engine.kernel as Core
 
+Core.logging.info(f"{Core.functions.getActualTime()}:Запуск бота")
+
 kernel = Core.Kernel()
 bot = telebot.TeleBot(kernel.getToken())
 
@@ -619,5 +621,5 @@ def process(call):
                     outData += f"{j}.\nID: {i[0]}\nТип инцидента: {i[1]}\nНазвание: {i[2]}\nОписание: {i[3]}\nSubdata: {i[4]}\nData: {i[5]}, Дата: {i[6]}\n\n"
                     j += 1
             bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text=outData)
-            
+
 bot.infinity_polling()

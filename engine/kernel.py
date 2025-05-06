@@ -1,9 +1,12 @@
 import configparser
+import logging
 
 import engine.DB.DB as database
 
 import engine.modules.messages_text as messages
 import engine.modules.functions as functions
+
+logging.basicConfig(level=logging.INFO, filename="engine/main.log", filemode="a")
 
 class Kernel:
     def __init__(self):
@@ -91,10 +94,19 @@ class Kernel:
         inviteID = invite[0]
         inviteCreator = invite[4]
         inviteAdminName = invite[2]
-        self.botDatabase.executeQuery(functions.generateActionLogQuery(userID, "useAdminInvite"))
-        self.botDatabase.executeQuery(f"UPDATE `AdminInvitings_BOT` SET `Activated` = '1' WHERE `AdminInvitings_BOT`.`ID` = {inviteID};")
-        self.botDatabase.executeQuery(f"INSERT INTO `Admins_BOT` (`ID`, `TID`, `CreationDate`, `Creator`, `Name`) VALUES (NULL, '{userID}', '{functions.getActualTime()}', '{inviteCreator}', '{inviteAdminName}')")
-        self.botDatabase.executeQuery(f"UPDATE `AdminInvitings_BOT` SET `ActivatedBy` = '{userID}' WHERE `AdminInvitings_BOT`.`ID` = {inviteID};")
+        try:
+            self.botDatabase.executeQuery(functions.generateActionLogQuery(userID, "useAdminInvite"))
+            self.botDatabase.executeQuery(f"UPDATE `AdminInvitings_BOT` SET `Activated` = '1' WHERE `AdminInvitings_BOT`.`ID` = {inviteID};")
+            self.botDatabase.executeQuery(f"INSERT INTO `Admins_BOT` (`ID`, `TID`, `CreationDate`, `Creator`, `Name`) VALUES (NULL, '{userID}', '{functions.getActualTime()}', '{inviteCreator}', '{inviteAdminName}')")
+            self.botDatabase.executeQuery(f"UPDATE `AdminInvitings_BOT` SET `ActivatedBy` = '{userID}' WHERE `AdminInvitings_BOT`.`ID` = {inviteID};")
+        except database.mysql.connector.Error as e:
+            try:
+                self.botDatabase.executeQuery(functions.generateBotLogQuery("DB", e))
+            except:
+                print("Ошибка записи в БД!")
+                logging.critical("Ошибка при записи лога в БД!")
+            finally:
+                logging.error(f"{functions.getActualTime()}:e")
         self.getActualAdmins()
 
     def getInvitings(self, id = None):
