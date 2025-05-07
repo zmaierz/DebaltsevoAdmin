@@ -239,6 +239,15 @@ class Kernel:
             pageTable = pageData[4]
             pageContent = self.webDatabase.getData(f"SELECT * FROM `{pageTable}_Page`")
             return pageData, pageContent
+    def getBlockData(self, pageTable, blockID):
+        blockData = self.webDatabase.getData(f"SELECT * FROM `{pageTable}` WHERE `ID` = \"{blockID}\";")
+        if (blockData == []):
+            return None
+        return blockData[0]
+    def deleteBlock(self, pageID, blockID, adminID):
+        pageData, pageContent = self.getPageData(pageID)
+        self.webDatabase.executeQuery(functions.generateActionLogQuery(adminID, "deleteBlock"))
+        self.webDatabase.executeQuery(f"DELETE FROM `{pageData[4]}_Page` WHERE `{pageData[4]}_Page`.`ID` = {blockID}")
     def createCategoryInDB(self, categoryName, categoryUrl, adminID):
         highNumber = int(self.getCategoryLastNumber()) + 1
         self.botDatabase.executeQuery(functions.generateActionLogQuery(adminID, "CreateCategory", categoryName))

@@ -511,6 +511,36 @@ def process(call):
             elif (deleteStatus == 2): # Confim No
                 bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Отменено", reply_markup=None)
                 bot.send_message(call.message.chat.id, "Главное меню", reply_markup=mainMenuMarkup)
+        elif (call.data[2] == "b"): # Block
+            if (call.data[5] == "-"):
+                pageID = call.data[4]
+                pageOffset = 0
+            else:
+                pageID, pageOffset = kernel.getIDWithOffset(call.data, 4)
+                pageOffset -= 1
+            if (pageOffset == 0):
+                blockID = call.data[6]
+                blockOffset = 0
+            else:
+                blockID, blockOffset = kernel.getIDWithOffset(call.data, 6 + pageOffset)
+                pageOffset -= 1
+            if (pageOffset == 0 and blockOffset == 0):
+                deleteStatus = int(call.data[8])
+            else:
+                deleteStatus = int(call.data[8 + pageOffset + blockOffset])
+            if (deleteStatus == 0): # Confim none
+                confimDeleteBlockMarkup = types.InlineKeyboardMarkup().add(
+                    types.InlineKeyboardButton("Да", callback_data=f"d-b-{pageID}-{blockID}-1"),
+                    types.InlineKeyboardButton("Нет", callback_data=f"d-b-{pageID}-{blockID}-2")
+                )
+                bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Вы действительно хотите удалить блок?", reply_markup=confimDeleteBlockMarkup)
+            elif (deleteStatus == 1): # Confim ok
+                kernel.deleteBlock(pageID, blockID, call.from_user.id)
+                backToOpenBlockMarkup = types.InlineKeyboardMarkup().add(types.InlineKeyboardButton("Назад", callback_data=f"o-p-{pageID}"))
+                bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Удалено", reply_markup=backToOpenBlockMarkup)
+            elif (deleteStatus == 2): # Confim No
+                backToOpenBlockMarkup = types.InlineKeyboardMarkup().add(types.InlineKeyboardButton("Назад", callback_data=f"o-b-{pageID}-{blockID}"))
+                bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Отменено", reply_markup=backToOpenBlockMarkup)
     elif (call.data[0] == "o"): # Open
         if (call.data[2] == "a"): # Admin
             if (len(call.data) == 4):
@@ -596,7 +626,7 @@ def process(call):
                 types.InlineKeyboardButton("Удалить страницу", callback_data=f"d-p-{pageID}-0")
             )
             bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text=outText, reply_markup=pageOpenMarkup)
-        elif (call.data[2] == "l"):
+        elif (call.data[2] == "l"): # Log
             if (call.data[4] == "1"): # Log bot
                 data = kernel.getLog("bot")
                 outData = "Лог бота:\n"
@@ -621,5 +651,26 @@ def process(call):
                     outData += f"{j}.\nID: {i[0]}\nТип инцидента: {i[1]}\nНазвание: {i[2]}\nОписание: {i[3]}\nSubdata: {i[4]}\nData: {i[5]}, Дата: {i[6]}\n\n"
                     j += 1
             bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text=outData)
+        elif (call.data[2] == "b"): # Block
+            if (call.data[5] == "-"):
+                pageID = call.data[4]
+                offsetPage = 0
+            else:
+                pageID, offsetPage = kernel.getIDWithOffset(call.data, 4)
+                offsetPage -= 1
+            if (offsetPage == 0):
+                blockID = call.data[6]
+            else:
+                blockID, offsetBlock = kernel.getIDWithOffset(call.data, 6 + offsetPage)
+            pageData, pageContent = kernel.getPageData(pageID)
+            blockData = kernel.getBlockData(pageData[4], blockID)
+            outData = botMessages["blockContent"].format(blockData[0], blockData[1], blockData[2], blockData[3])
+            openBlockMarkup = types.InlineKeyboardMarkup().add(
+                types.InlineKeyboardButton("Изменить Заголовок", callback_data=f"s-b-{pageID}-{blockID}-1"),
+                types.InlineKeyboardButton("Изменить содержание", callback_data=f"s-b-{pageID}-{blockID}-2"),
+                types.InlineKeyboardButton("Удалить блок", callback_data=f"d-b-{pageID}-{blockID}-0"),
+                types.InlineKeyboardButton("Назад", callback_data=f"s-r-{pageID}")
+            )
+            bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text=outData, reply_markup=openBlockMarkup)
 
 bot.infinity_polling()
