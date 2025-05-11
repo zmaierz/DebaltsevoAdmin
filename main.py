@@ -333,6 +333,7 @@ def process(call):
                 backToPageMarkup = types.InlineKeyboardMarkup().add(types.InlineKeyboardButton("Назад", callback_data=f"s-r-{pageID}"))
                 bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Блок создан", reply_markup=backToPageMarkup)
                 bot.send_message(call.message.chat.id, "Главное меню", reply_markup=mainMenuMarkup)
+                kernel.cancelAction(call.from_user.id)
             elif (call.data[4] == "2"): # Confim no
                 backToPageMarkup = types.InlineKeyboardMarkup().add(types.InlineKeyboardButton("Назад", callback_data=f"s-r-{pageID}"))
                 bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Создание блока отменено", reply_markup=backToPageMarkup)
@@ -467,6 +468,7 @@ def process(call):
                 editBlockBackMarkup = types.InlineKeyboardMarkup().add(
                     types.InlineKeyboardButton("Назад", callback_data=f"o-b-{pageID}-{blockID}")
                 )
+                kernel.cancelAction(call.from_user.id)
                 bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Отменено", reply_markup=editBlockBackMarkup)
     elif (call.data[0] == "d"): # Delete
         if (call.data[2] == "s"): # Cache
