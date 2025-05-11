@@ -21,15 +21,23 @@ class Database:
     def getData(self, query):
         connection = self.getConnection()
         cursor = connection.cursor()
-        cursor.execute(query)
-        result = cursor.fetchall()
-        cursor.close()
-        connection.close()
+        try:
+            cursor.execute(query)
+            result = cursor.fetchall()
+        except Exception as e:
+            print(f"Возникло исключение SQL!\nОшибка: {e}")
+        finally:
+            cursor.close()
+            connection.close()
         return result
     def executeQuery(self, query):
         connection = self.getConnection()
         cursor = connection.cursor()
-        cursor.execute(query)
-        connection.commit()
-        cursor.close()
-        connection.close()
+        try:
+            cursor.execute(query)
+            connection.commit()
+        except Exception as e:
+            print(f"Возникло исключение SQL!\nОшибка: {e}")
+        finally:
+            cursor.close()
+            connection.close()

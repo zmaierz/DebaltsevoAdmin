@@ -1,7 +1,4 @@
-import os
-import random
-import string
-import pickle
+import os, random, string, pickle, shutil, re
 from datetime import datetime
 from transliterate import translit, get_available_language_codes
 
@@ -51,7 +48,7 @@ def getFileContent(path):
     return content
 
 def writeFileContent(path, data):
-    file = open(path, "w")
+    file = open(path, "w+")
     file.write(data)
     file.close()
 
@@ -64,7 +61,19 @@ def deleteDirectoryContent(path):
         except Exception as e:
             pass
 
+def deleteDirectory(path):
+    if (os.path.exists(path)):
+        shutil.rmtree(path)
+
+def createDirectory(path):
+    os.makedirs(path, exist_ok=True)
+
 def getSystemData():
-    file = open("engine/systemData.db", "rb")
+    file = open("engine/data/systemData.db", "rb")
     data = pickle.load(file)
     return data
+
+def isStringValid(temp):
+    regex = "^[a-zA-Zа-яА-ЯёЁ0-9*]+$"
+    pattern = re.compile(regex)
+    return pattern.search(temp) is not None
