@@ -12,10 +12,19 @@ def translitText(text):
 def getActualTime():
     return datetime.now()
 
-def generateAdminInviteCode():
-    text = [random.choice(string.ascii_lowercase + string.digits if i != 5 else string.ascii_uppercase) for i in range(20)]
+def generateAdminInviteCode(leng = 20):
+    text = [random.choice(string.ascii_lowercase + string.digits if i != 5 else string.ascii_uppercase) for i in range(leng)]
     code = ''.join(text)
     return code
+
+def generateActionLogQuery(adminID, action, data = ""):
+    query = f"INSERT INTO `logAction_BOY` (`ID`, `adminID`, `action`, `data`, `date`) VALUES (NULL, '{adminID}', '{action}', '{data}', '{getActualTime()}')"
+    return query
+
+def generateBotLogQuery(source, data):
+    query = f"INSERT INTO `log_BOT` (`ID`, `source`, `data`, `date`) VALUES (NULL, '{source}', \"{data}\", '{getActualTime()}')"
+    print(f"Query: {query}")
+    return query
 
 def getIDWithOffset(call, startPlace):
     idOffset = 0
