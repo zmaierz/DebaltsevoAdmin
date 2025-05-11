@@ -48,7 +48,7 @@ def getFileContent(path):
     return content
 
 def writeFileContent(path, data):
-    file = open(path, "w")
+    file = open(path, "w+")
     file.write(data)
     file.close()
 
@@ -60,6 +60,13 @@ def deleteDirectoryContent(path):
                 os.remove(file_path)
         except Exception as e:
             pass
+
+def deleteDirectory(path):
+    if (os.path.exists(path)):
+        shutil.rmtree(path)
+
+def createDirectory(path):
+    os.makedirs(path, exist_ok=True)
 
 def getSystemData():
     file = open("engine/data/systemData.db", "rb")

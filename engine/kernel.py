@@ -207,6 +207,7 @@ class Kernel:
             categoryUrl = functions.translitText(categoryName)
             categoryUrl = categoryUrl.replace(" ", "-")
             functions.createDirectory(self.webPath + categoryUrl)
+            functions.writeFileContent(f"{self.webPath}{categoryUrl}/index.php", functions.getFileContent("engine/data/index.php"))
             self.createCategoryInDB(categoryName, categoryUrl, adminID)
             self.cancelAction(adminID)
         elif (status == 0): # Отмена. Удаление записи
