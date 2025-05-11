@@ -1,4 +1,4 @@
-import os, random, string, pickle, shutil
+import os, random, string, pickle, shutil, re
 from datetime import datetime
 from transliterate import translit, get_available_language_codes
 
@@ -72,3 +72,8 @@ def getSystemData():
     file = open("engine/data/systemData.db", "rb")
     data = pickle.load(file)
     return data
+
+def isStringValid(temp):
+    regex = "^[a-zA-Zа-яА-ЯёЁ0-9*]+$"
+    pattern = re.compile(regex)
+    return pattern.search(temp) is not None

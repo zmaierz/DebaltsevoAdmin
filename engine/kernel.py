@@ -395,6 +395,8 @@ class Kernel:
         del self.usersActions[id]
     def isDebug(self):
         return self.debug
+    def checkStringValid(self, temp):
+        return functions.isStringValid(temp)
     def changeCacheStatus(self, newStatus):
         if (newStatus):
             newStatus = "true"

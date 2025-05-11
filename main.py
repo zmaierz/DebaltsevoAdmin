@@ -92,13 +92,16 @@ def answer(message):
             usersActions = kernel.getUsersActions(message.from_user.id)
             if (usersActions[0] == "pageCreate"):
                 if (usersActions[4] == 2): # Ввод имени
-                    kernel.pageCreate(message.from_user.id, 2, message.text)
-                    categoriesMarkup = types.InlineKeyboardMarkup()
-                    categoryList = kernel.getCategoryList()
-                    for i in categoryList:
-                        categoriesMarkup.add(types.InlineKeyboardButton(text=i[1], callback_data=f"c-p-3-{i[0]}"))
-                    categoriesMarkup.add(types.InlineKeyboardButton(text="Без категории", callback_data="c-p-3-0"))
-                    bot.send_message(message.chat.id, botMessages["createPage_enterCategory"], reply_markup=categoriesMarkup)
+                    if (kernel.checkStringValid(message.text) == False):
+                        bot.send_message(message.chat.id, "Используются запрещенные символы!\nРазрешено использовать только цифры, русские и латинские символы")
+                    else:
+                        kernel.pageCreate(message.from_user.id, 2, message.text)
+                        categoriesMarkup = types.InlineKeyboardMarkup()
+                        categoryList = kernel.getCategoryList()
+                        for i in categoryList:
+                            categoriesMarkup.add(types.InlineKeyboardButton(text=i[1], callback_data=f"c-p-3-{i[0]}"))
+                        categoriesMarkup.add(types.InlineKeyboardButton(text="Без категории", callback_data="c-p-3-0"))
+                        bot.send_message(message.chat.id, botMessages["createPage_enterCategory"], reply_markup=categoriesMarkup)
             elif (usersActions[0] == "changeAdminName"):
                 if (usersActions[4] == 2): # Ввод имени
                     kernel.changeAdminName(message.from_user.id, 2, message.text)
@@ -118,6 +121,8 @@ def answer(message):
                 if (usersActions[4] == 2): # Ввод имени
                     if (len(message.text) > 100):
                         bot.send_message(message.chat.id, "Слишком длинное имя!")
+                    elif (kernel.checkStringValid(message.text) == False):
+                        bot.send_message(message.chat.id, "Используются запрещенные символы!\nРазрешено использовать только цифры, русские и латинские символы")
                     else:
                         kernel.createCategory(message.from_user.id, 2, message.text)
                         confimCreateCategoryMarkup = types.InlineKeyboardMarkup().add(types.InlineKeyboardButton("Да", callback_data="c-c-1"), types.InlineKeyboardButton("Нет", callback_data="c-c-2"))
