@@ -206,6 +206,7 @@ class Kernel:
             categoryName = self.usersActions[adminID][1]
             categoryUrl = functions.translitText(categoryName)
             categoryUrl = categoryUrl.replace(" ", "-")
+            functions.createDirectory(self.webPath + categoryUrl)
             self.createCategoryInDB(categoryName, categoryUrl, adminID)
             self.cancelAction(adminID)
         elif (status == 0): # Отмена. Удаление записи
@@ -285,10 +286,19 @@ class Kernel:
         functions.deleteFile(systemCachePath + "header.html")
         self.updateCategoryList()
     def deleteCategoryFromDB(self, categoryName, adminID):
+        categoryFolder = self.webDatabase.getData(f"SELECT * FROM `categoryList` WHERE `name` = \"{categoryName}\";")[0][2]
+        categoryPath = self.webPath + categoryFolder
+        functions.deleteDirectory(categoryPath)
         pageCategoryList = self.getCategoryPageList(categoryName)
         self.botDatabase.executeQuery(functions.generateActionLogQuery(adminID, "deleteCategory", categoryName))
         for i in pageCategoryList:
-            self.webDatabase.executeQuery(f"DROP TABLE `{i[4]}`")
+            pageTable = i[4]
+            print(f"Удаляемая таблица: {pageTable}")
+            if (len(pageTable) < 5):
+                pageTable += "_Page"
+            elif (pageTable[-5] != "_"):
+                pageTable += "_Page"
+            self.webDatabase.executeQuery(f"DROP TABLE `{pageTable}`")
         self.webDatabase.executeQuery(f"DELETE FROM pageList WHERE `pageList`.`category` = \"{categoryName}\";")
         self.webDatabase.executeQuery(f"DELETE FROM `categoryList` WHERE `categoryList`.`name` = '{categoryName}'")
         systemCachePath = self.webPath + self.cachePath + "system/"
