@@ -160,6 +160,32 @@ class Kernel:
             self.deletePageCache(self.usersActions[adminID][5], adminID)
         elif (status == 6): # Отмена
             self.cancelAction(adminID)
+    def changeBlock(self, adminID, status, data=""):
+        status = int(status)
+        if (status == 1): # Начало редактирования блока (Указание pageID)
+            self.usersActions[adminID] = ["blockEdit", "", "", "", 2, data] # 0 - Type, 1 - blockID, 2 - BlockContentType, 3 - Data, 4 - Status, 5 - PageID
+        elif (status == 2): # Указание BlockID
+            self.usersActions[adminID][1] = data
+            self.usersActions[adminID][4] = 3
+        elif (status == 3): # Указание BlockTypeID
+            self.usersActions[adminID][2] = data
+            self.usersActions[adminID][4] = 3
+        elif (status == 4): # Указание data
+            self.usersActions[adminID][3] = data
+            self.usersActions[adminID][4] = 4
+        elif (status == 5): # Подтверждение
+            pageTable = self.getPageData(self.usersActions[adminID][5])[0][4]
+            if (pageTable[-5] != "_"):
+                pageTable += "_Page"
+            blockType = "data"
+            if (int(self.usersActions[adminID][2]) == 1):
+                blockType = "subdata"
+            query = f"UPDATE `{pageTable}` SET `{blockType}` = '{self.usersActions[adminID][3]}' WHERE `{pageTable}`.`ID` = {self.usersActions[adminID][1]};"
+            self.botDatabase.executeQuery(functions.generateActionLogQuery(adminID, "editBlock", f"PageTable: {pageTable}, blockID: {self.usersActions[adminID][1]}, blockContentType: {self.usersActions[adminID][2]}, data: {self.usersActions[adminID][3]}"))
+            self.webDatabase.executeQuery(query)
+            self.deletePageCache(self.usersActions[adminID][5], adminID)
+        elif (status == 6): # Отмена
+            self.cancelAction(adminID)
     def getBlockTypeList(self):
         typeList = self.webDatabase.getData(f"SELECT * FROM `typeList`")
         return typeList
@@ -240,6 +266,8 @@ class Kernel:
             pageContent = self.webDatabase.getData(f"SELECT * FROM `{pageTable}_Page`")
             return pageData, pageContent
     def getBlockData(self, pageTable, blockID):
+        if (pageTable[-5] != "_"):
+            pageTable += "_Page"
         blockData = self.webDatabase.getData(f"SELECT * FROM `{pageTable}` WHERE `ID` = \"{blockID}\";")
         if (blockData == []):
             return None

@@ -145,6 +145,15 @@ def answer(message):
                     outText = botMessages["checkNewBlock"].format(userAction[1], userAction[2], userAction[3])
                     confimBlockCreateMarkup = types.InlineKeyboardMarkup().add(types.InlineKeyboardButton("Да", callback_data=f"c-d-1-{userAction[5]}"), types.InlineKeyboardButton("Отмена", callback_data=f"c-d-2-{userAction[5]}"))
                     bot.send_message(message.chat.id, outText, reply_markup=confimBlockCreateMarkup)
+            elif (usersActions[0] == "blockEdit"):
+                if (int(usersActions[4]) == 3): # Ввод данных
+                    kernel.changeBlock(message.from_user.id, 4, message.text)
+                    outText = botMessages["editBlock"].format(usersActions[5], usersActions[1], usersActions[2], usersActions[3])
+                    editBlockMarkup = types.InlineKeyboardMarkup().add(
+                        types.InlineKeyboardButton("Изменить", callback_data=f"s-b-{usersActions[5]}-{usersActions[1]}-{usersActions[2]}-1"),
+                        types.InlineKeyboardButton("Отменить", callback_data=f"s-b-{usersActions[5]}-{usersActions[1]}-{usersActions[2]}-2"),
+                    )
+                    bot.send_message(message.chat.id, outText, reply_markup=editBlockMarkup)
         elif (message.text == mainMenuButtons["createNewPage"]):
             kernel.pageCreate(message.from_user.id, 1)
             bot.send_message(message.chat.id, botMessages["createPage_enterName"], reply_markup=cancelMarkup)
@@ -407,6 +416,43 @@ def process(call):
             pageOpenContentMarkup.add(types.InlineKeyboardButton(text="Создать блок", callback_data=f"c-b-{pageID}-0"))
             pageOpenContentMarkup.add(types.InlineKeyboardButton(text="Назад", callback_data=f"o-p-{pageID}"))
             bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text=outData, reply_markup=pageOpenContentMarkup)
+        elif (call.data[2] == "b"): # Block
+            if (call.data[5] == "-"):
+                pageID = call.data[4]
+                pageOffset = 0
+            else:
+                pageID, pageOffset = kernel.getIDWithOffset(call.data, 4)
+                pageOffset -= 1
+            if (call.data[7 + pageOffset] == "-"):
+                blockID = call.data[6 + pageOffset]
+                blockOffset = 0
+            else:
+                blockID, blockOffset = kernel.getIDWithOffset(call.data, pageOffset)
+                blockOffset -= 1
+            blockContentType = int(call.data[8 + pageOffset + blockOffset])
+            confim = int(call.data[10 + pageOffset + blockOffset])
+            if (confim == 0): # Confim None
+                kernel.changeBlock(call.from_user.id, 1, int(pageID))
+                kernel.changeBlock(call.from_user.id, 2, int(blockID))
+                kernel.changeBlock(call.from_user.id, 3, int(blockContentType))
+                changeType = "содержания"
+                if (blockContentType == 1):
+                    changeType = "заголовка"
+                bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text=f"Изменение {changeType}", reply_markup=None)
+                bot.send_message(call.message.chat.id, "Введите новые данные", reply_markup=cancelMarkup)
+            elif (confim == 1): # Confim Ok
+                kernel.changeBlock(call.from_user.id, 5)
+                editBlockBackMarkup = types.InlineKeyboardMarkup().add(
+                    types.InlineKeyboardButton("Назад", callback_data=f"o-b-{pageID}-{blockID}")
+                )
+                kernel.cancelAction(call.from_user.id)
+                bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Изменено", reply_markup=editBlockBackMarkup)
+                bot.send_message(call.message.chat.id, "Главное меню", reply_markup=mainMenuMarkup)
+            elif (confim == 2): # Confim No
+                editBlockBackMarkup = types.InlineKeyboardMarkup().add(
+                    types.InlineKeyboardButton("Назад", callback_data=f"o-b-{pageID}-{blockID}")
+                )
+                bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Отменено", reply_markup=editBlockBackMarkup)
     elif (call.data[0] == "d"): # Delete
         if (call.data[2] == "s"): # Cache
             if (call.data[4] == "0"): # Confirm None
@@ -666,8 +712,8 @@ def process(call):
             blockData = kernel.getBlockData(pageData[4], blockID)
             outData = botMessages["blockContent"].format(blockData[0], blockData[1], blockData[2], blockData[3])
             openBlockMarkup = types.InlineKeyboardMarkup().add(
-                types.InlineKeyboardButton("Изменить Заголовок", callback_data=f"s-b-{pageID}-{blockID}-1"),
-                types.InlineKeyboardButton("Изменить содержание", callback_data=f"s-b-{pageID}-{blockID}-2"),
+                types.InlineKeyboardButton("Изменить Заголовок", callback_data=f"s-b-{pageID}-{blockID}-1-0"),
+                types.InlineKeyboardButton("Изменить содержание", callback_data=f"s-b-{pageID}-{blockID}-2-0"),
                 types.InlineKeyboardButton("Удалить блок", callback_data=f"d-b-{pageID}-{blockID}-0"),
                 types.InlineKeyboardButton("Назад", callback_data=f"s-r-{pageID}")
             )
