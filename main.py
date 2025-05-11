@@ -41,6 +41,16 @@ def welcome(message):
     else:
         bot.send_message(message.chat.id, botMessages["welcomeUnRegister"].format(message.from_user.first_name), reply_markup=unregisterMarkup)
 
+@bot.message_handler(commands=['clear'])
+def stopActino(message):
+    if (kernel.isAdmin(message.from_user.id)):
+        kernel.cancelAction(message.from_user.id)
+
+@bot.message_handler(commands=['menu'])
+def showMenu(message):
+    if (kernel.isAdmin(message.from_user.id)):
+        bot.send_message(message.chat.id, "Главное меню", reply_markup=mainMenuMarkup)
+
 @bot.message_handler(content_types=['photo'])
 def photo(message):
     if (kernel.isUserActive(message.from_user.id)):
