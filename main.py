@@ -255,6 +255,8 @@ def answer(message):
                 bot.send_message(message.chat.id, outText, reply_markup=inviteListMarkup, parse_mode="html")
             elif (message.text == settingsAdminMenuButtons["backToSettings"]):
                 bot.send_message(message.chat.id, "Настройки", reply_markup=settingsMenuMarkup)
+        else:
+            bot.send_message(message.chat.id, "Команда не распознана!\nПожалуйста, используйте кнопки на экране")
     elif (message.text == mainMenuButtons["RegisterUser"]):
         bot.send_message(message.chat.id, "Введите код-приглашение")
         kernel.authUser(message.from_user.id, 1)
