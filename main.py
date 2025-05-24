@@ -551,7 +551,7 @@ def process(call):
                 confimDeletePageCache = types.InlineKeyboardMarkup().add(types.InlineKeyboardButton("Да", callback_data=f"d-r-{pageID}-1"), types.InlineKeyboardButton("Нет", callback_data=f"d-r-{pageID}-2"))
                 bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Вы действительно хотите очистить кэш страницы?", reply_markup=confimDeletePageCache)
             elif (deleteStatus == 1): # Confim Ok
-                kernel.deletePageCache(pageID, call.from_user, id)
+                kernel.deletePageCache(pageID, call.from_user.id)
                 bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Кэш страницы удален", reply_markup=None)
                 bot.send_message(call.message.chat.id, "Главное меню", reply_markup=mainMenuMarkup)
             elif (deleteStatus == 2): # Confim No
