@@ -1,0 +1,13 @@
+[Unit]
+Description=Телеграм-бот для управления сайтом для техникума Дебальцево
+Requires=mysql.service
+Wants=apache2.service
+
+[Service]
+User=root
+WorkingDirectory=/home/nick/projects/bots/DebaltsevoAdmin
+ExecStart=python3 /home/nick/projects/bots/DebaltsevoAdmin/main.py
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
