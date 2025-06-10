@@ -2,7 +2,7 @@ def getMainMenuButtons():
     return {
         "createNewPage" : "Создание страницы",
         "Categories" : "Категории",
-        "News" : "Новости",
+        # "News" : "Новости",
         "Settings" : "Настройки",
         "Logs" : "Логи",
         "RegisterUser" : "Ввести код-приглашение",
@@ -12,8 +12,8 @@ def getMainMenuButtons():
 def getSettingsMenuButtons():
     return {
         "cache" : "Кэш",
-        "checkFiles" : "Просмотр файлов",
-        "changeSiteInformation" : "Изменение информации о сайте",
+        # "checkFiles" : "Просмотр файлов",
+        # "changeSiteInformation" : "Изменение информации о сайте",
         "manage" : "Управление",
         "admins" : "Админы",
         "version" : "Версия",

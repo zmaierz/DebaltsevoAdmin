@@ -1,8 +1,6 @@
 import mysql.connector
 import logging
 
-logging.dbErrorLogging(level=logging.INFO, filename="engine/error.log", filemode="a+")
-
 class Database:
     def __init__(self, username, password, hostname, database, port = 3389):
         self.username = username

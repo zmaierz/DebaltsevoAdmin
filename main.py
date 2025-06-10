@@ -14,12 +14,14 @@ categoryMenuButtons = kernel.getCategoryMenuButtons()
 botMessages = kernel.getMessages()
 
 mainMenuMarkup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-mainMenuMarkup.add(types.KeyboardButton(mainMenuButtons["createNewPage"]), types.KeyboardButton(mainMenuButtons["Categories"]), types.KeyboardButton(mainMenuButtons["News"]))
+# mainMenuMarkup.add(types.KeyboardButton(mainMenuButtons["createNewPage"]), types.KeyboardButton(mainMenuButtons["Categories"]), types.KeyboardButton(mainMenuButtons["News"]))
+mainMenuMarkup.add(types.KeyboardButton(mainMenuButtons["createNewPage"]), types.KeyboardButton(mainMenuButtons["Categories"]))
 mainMenuMarkup.add(types.KeyboardButton(mainMenuButtons["Settings"]), types.KeyboardButton(mainMenuButtons["Logs"]))
 
 settingsMenuMarkup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-settingsMenuMarkup.add(types.KeyboardButton(settingsMenuButtons["cache"]), types.KeyboardButton(settingsMenuButtons["checkFiles"]))
-settingsMenuMarkup.add(types.KeyboardButton(settingsMenuButtons["changeSiteInformation"]))
+# settingsMenuMarkup.add(types.KeyboardButton(settingsMenuButtons["cache"]), types.KeyboardButton(settingsMenuButtons["checkFiles"]))
+settingsMenuMarkup.add(types.KeyboardButton(settingsMenuButtons["cache"]))
+# settingsMenuMarkup.add(types.KeyboardButton(settingsMenuButtons["changeSiteInformation"]))
 settingsMenuMarkup.add(types.KeyboardButton(settingsMenuButtons["manage"]), types.KeyboardButton(settingsMenuButtons["admins"]), types.KeyboardButton(settingsMenuButtons["version"]))
 settingsMenuMarkup.add(types.KeyboardButton(settingsMenuButtons["back"]))
 
@@ -185,8 +187,8 @@ def answer(message):
                 j += 1
             bot.send_message(message.chat.id, "Настройка категорий", reply_markup=categoryMenuMarkup)
             bot.send_message(message.chat.id, outText, reply_markup=categoryListMarkup)
-        elif (message.text == mainMenuButtons["News"]):
-            bot.send_message(message.chat.id, "Новости в разработке!")
+        # elif (message.text == mainMenuButtons["News"]):
+        #     bot.send_message(message.chat.id, "Новости в разработке!")
         elif (message.text == mainMenuButtons["Settings"]):
             bot.send_message(message.chat.id, botMessages["settingsText"], reply_markup=settingsMenuMarkup)
         elif (message.text == mainMenuButtons["Logs"]):
@@ -210,10 +212,10 @@ def answer(message):
                     cacheOnOffButton = types.InlineKeyboardButton("Включить", callback_data="s-c-1")
                 cacheSettingMarkup = types.InlineKeyboardMarkup().add(cacheOnOffButton, types.InlineKeyboardButton("Очистить", callback_data="d-s-0"))
                 bot.send_message(message.chat.id, botMessages["settingsCache"].format(kernel.getStrFromBool(cacheStatus)), reply_markup=cacheSettingMarkup)
-            elif (message.text == settingsMenuButtons["checkFiles"]):
-                bot.send_message(message.chat.id, "Просмотр файлов в разработке")
-            elif (message.text == settingsMenuButtons["changeSiteInformation"]):
-                bot.send_message(message.chat.id, "Изменение информации о сайте в разработке")
+            # elif (message.text == settingsMenuButtons["checkFiles"]):
+            #     bot.send_message(message.chat.id, "Просмотр файлов в разработке")
+            # elif (message.text == settingsMenuButtons["changeSiteInformation"]):
+                # bot.send_message(message.chat.id, "Изменение информации о сайте в разработке")
             elif (message.text == settingsMenuButtons["manage"]):
                 debugStatus = kernel.getDebugStatus()
                 if (debugStatus):
