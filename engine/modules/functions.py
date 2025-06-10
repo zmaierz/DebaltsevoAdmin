@@ -74,6 +74,6 @@ def getSystemData():
     return data
 
 def isStringValid(temp):
-    regex = "^[a-zA-Zа-яА-ЯёЁ0-9*]+$"
+    regex = "^[a-zA-Zа-яА-ЯёЁ 0-9*]+$"
     pattern = re.compile(regex)
     return pattern.search(temp) is not None

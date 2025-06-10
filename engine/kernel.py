@@ -136,7 +136,7 @@ class Kernel:
         elif (status == 5): # Подтверждение. Создание страницы
             alias = functions.translitText(self.usersActions[adminID][1])
             alias = alias.replace(" ", "_")
-            self.createPageToWeb(self.usersActions[adminID][1], alias, self.getCategoryFromID(self.usersActions[adminID][2]), self.usersActions[adminID][3], adminID)
+            self.createPageToWeb(self.usersActions[adminID][1], alias, self.getCategoryFromID(self.usersActions[adminID][2]), self.usersActions[adminID][3], self.webDBConfig["database"], adminID)
             self.cancelAction(adminID)
         elif (status == 0): # Отмена. Удаление записи
             self.cancelAction(adminID)
@@ -247,9 +247,9 @@ class Kernel:
         if (id in self.usersAuth):
             return True
         return False
-    def createPageToWeb(self, pageName, pageAlias, pageCategory, pageHide, adminID):
+    def createPageToWeb(self, pageName, pageAlias, pageCategory, pageHide, database, adminID):
         addPageToListQuery = f"INSERT INTO `pageList` (`ID`, `name`, `alias`, `category`, `tableName`, `cacheName`, `isHide`) VALUES (NULL, '{pageName}', '{pageAlias}', '{pageCategory}', '{pageAlias}', NULL, '{pageHide}')"
-        createPageTableQuery = f"CREATE TABLE `debaltsevo-web`.`{pageAlias}_Page` (`ID` INT NOT NULL AUTO_INCREMENT , `type` VARCHAR(32) NOT NULL , `subdata` VARCHAR(128) NOT NULL , `data` TEXT NOT NULL , PRIMARY KEY (`ID`)) ENGINE = InnoDB;"
+        createPageTableQuery = f"CREATE TABLE `{database}`.`{pageAlias}_Page` (`ID` INT NOT NULL AUTO_INCREMENT , `type` VARCHAR(32) NOT NULL , `subdata` VARCHAR(128) NOT NULL , `data` TEXT NOT NULL , PRIMARY KEY (`ID`)) ENGINE = InnoDB;"
         createPageConnectionQuery = f"ALTER TABLE `{pageAlias}_Page` ADD FOREIGN KEY (`type`) REFERENCES `typeList`(`Name`) ON DELETE RESTRICT ON UPDATE RESTRICT;"
         self.botDatabase.executeQuery(functions.generateActionLogQuery(adminID, "createPage", f"PageName: {pageName}, Category: {pageCategory}"))
         self.webDatabase.executeQuery(addPageToListQuery)

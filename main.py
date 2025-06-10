@@ -41,6 +41,16 @@ def welcome(message):
     else:
         bot.send_message(message.chat.id, botMessages["welcomeUnRegister"].format(message.from_user.first_name), reply_markup=unregisterMarkup)
 
+@bot.message_handler(commands=['clear'])
+def stopActino(message):
+    if (kernel.isAdmin(message.from_user.id)):
+        kernel.cancelAction(message.from_user.id)
+
+@bot.message_handler(commands=['menu'])
+def showMenu(message):
+    if (kernel.isAdmin(message.from_user.id)):
+        bot.send_message(message.chat.id, "Главное меню", reply_markup=mainMenuMarkup)
+
 @bot.message_handler(content_types=['photo'])
 def photo(message):
     if (kernel.isUserActive(message.from_user.id)):
@@ -245,6 +255,8 @@ def answer(message):
                 bot.send_message(message.chat.id, outText, reply_markup=inviteListMarkup, parse_mode="html")
             elif (message.text == settingsAdminMenuButtons["backToSettings"]):
                 bot.send_message(message.chat.id, "Настройки", reply_markup=settingsMenuMarkup)
+        else:
+            bot.send_message(message.chat.id, "Команда не распознана!\nПожалуйста, используйте кнопки на экране")
     elif (message.text == mainMenuButtons["RegisterUser"]):
         bot.send_message(message.chat.id, "Введите код-приглашение")
         kernel.authUser(message.from_user.id, 1)
@@ -323,6 +335,7 @@ def process(call):
                 backToPageMarkup = types.InlineKeyboardMarkup().add(types.InlineKeyboardButton("Назад", callback_data=f"s-r-{pageID}"))
                 bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Блок создан", reply_markup=backToPageMarkup)
                 bot.send_message(call.message.chat.id, "Главное меню", reply_markup=mainMenuMarkup)
+                kernel.cancelAction(call.from_user.id)
             elif (call.data[4] == "2"): # Confim no
                 backToPageMarkup = types.InlineKeyboardMarkup().add(types.InlineKeyboardButton("Назад", callback_data=f"s-r-{pageID}"))
                 bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Создание блока отменено", reply_markup=backToPageMarkup)
@@ -457,6 +470,7 @@ def process(call):
                 editBlockBackMarkup = types.InlineKeyboardMarkup().add(
                     types.InlineKeyboardButton("Назад", callback_data=f"o-b-{pageID}-{blockID}")
                 )
+                kernel.cancelAction(call.from_user.id)
                 bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Отменено", reply_markup=editBlockBackMarkup)
     elif (call.data[0] == "d"): # Delete
         if (call.data[2] == "s"): # Cache
@@ -537,7 +551,7 @@ def process(call):
                 confimDeletePageCache = types.InlineKeyboardMarkup().add(types.InlineKeyboardButton("Да", callback_data=f"d-r-{pageID}-1"), types.InlineKeyboardButton("Нет", callback_data=f"d-r-{pageID}-2"))
                 bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Вы действительно хотите очистить кэш страницы?", reply_markup=confimDeletePageCache)
             elif (deleteStatus == 1): # Confim Ok
-                kernel.deletePageCache(pageID, call.from_user, id)
+                kernel.deletePageCache(pageID, call.from_user.id)
                 bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text="Кэш страницы удален", reply_markup=None)
                 bot.send_message(call.message.chat.id, "Главное меню", reply_markup=mainMenuMarkup)
             elif (deleteStatus == 2): # Confim No
