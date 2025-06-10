@@ -2,8 +2,8 @@ import pickle
 
 data = {
     "version" : {
-        "botVersion" : "0.1.0.1_CloseBeta",
-        "siteVersion" : "0.1.10_CloseBeta"
+        "botVersion" : "1.0.0_preRelease0 (1001)",
+        "siteVersion" : "1.0.0_preRelease0 (1001)"
     },
 }
 
